@@ -1,0 +1,51 @@
+export const tokens = {
+  colors: {
+    background: '#0f0e17',
+    surface: '#1a1825',
+    surfaceElevated: '#211f2e',
+    border: '#2e2b40',
+    borderSubtle: '#1f1d2c',
+    primary: '#5332ea',
+    primaryHover: '#6445f0',
+    primaryMuted: 'rgba(83, 50, 234, 0.1)',
+    primarySubtle: '#2a1f7a',
+    textDefault: '#ffffff',
+    textSecondary: '#b3b0c8',
+    textMuted: '#6e6b87',
+    success: '#34d399',
+    warning: '#fbbf24',
+    danger: '#f87171',
+    info: '#60a5fa',
+    pipeline: {
+      prospect: '#a78bfa',
+      contacted: '#60a5fa',
+      replied: '#34d399',
+      followup: '#fbbf24',
+      proposal: '#fb923c',
+      won: '#10b981',
+      lost: '#4b5563',
+    },
+  },
+  duration: {
+    instant: 80,
+    fast: 150,
+    base: 220,
+    slow: 350,
+    enter: 400,
+  },
+  easing: {
+    default: [0.25, 0.1, 0.25, 1] as const,
+    enter: [0, 0, 0.2, 1] as const,
+    exit: [0.4, 0, 1, 1] as const,
+    spring: [0.34, 1.56, 0.64, 1] as const,
+  },
+  radius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+    '2xl': 24,
+  },
+} as const
+
+export type Tokens = typeof tokens

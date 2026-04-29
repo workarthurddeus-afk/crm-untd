@@ -1,0 +1,58 @@
+:root {
+  /* Base */
+  --background: #0f0e17;
+  --surface: #1a1825;
+  --surface-elevated: #211f2e;
+  --border: #2e2b40;
+  --border-subtle: #1f1d2c;
+
+  /* Brand */
+  --primary: #5332ea;
+  --primary-hover: #6445f0;
+  --primary-muted: rgba(83, 50, 234, 0.1);
+  --primary-subtle: #2a1f7a;
+
+  /* Text */
+  --text-default: #ffffff;
+  --text-secondary: #b3b0c8;
+  --text-muted: #6e6b87;
+  --text-inverse: #0f0e17;
+
+  /* Semantic */
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+
+  /* Pipeline */
+  --pipe-prospect: #a78bfa;
+  --pipe-contacted: #60a5fa;
+  --pipe-replied: #34d399;
+  --pipe-followup: #fbbf24;
+  --pipe-proposal: #fb923c;
+  --pipe-won: #10b981;
+  --pipe-lost: #4b5563;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --glow-primary: 0 0 24px rgba(83, 50, 234, 0.35);
+  --glow-primary-sm: 0 0 8px rgba(83, 50, 234, 0.2);
+  --glow-success: 0 0 16px rgba(52, 211, 153, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

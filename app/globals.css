@@ -1,26 +1,78 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
+  /* Colors */
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-subtle: var(--primary-subtle);
+
+  --color-text: var(--text-default);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --color-pipe-prospect: var(--pipe-prospect);
+  --color-pipe-contacted: var(--pipe-contacted);
+  --color-pipe-replied: var(--pipe-replied);
+  --color-pipe-followup: var(--pipe-followup);
+  --color-pipe-proposal: var(--pipe-proposal);
+  --color-pipe-won: var(--pipe-won);
+  --color-pipe-lost: var(--pipe-lost);
+
+  /* Border radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  /* Shadows */
+  --shadow-sm-token: var(--shadow-sm);
+  --shadow-md-token: var(--shadow-md);
+  --shadow-lg-token: var(--shadow-lg);
+  --shadow-glow-primary: var(--glow-primary);
+  --shadow-glow-primary-sm: var(--glow-primary-sm);
+  --shadow-glow-success: var(--glow-success);
+
+  /* Font families */
+  --font-display: var(--font-geist-sans), sans-serif;
+  --font-sans: var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  /* Transition durations */
+  --transition-duration-instant: 80ms;
+  --transition-duration-fast: 150ms;
+  --transition-duration-base: 220ms;
+  --transition-duration-slow: 350ms;
+  --transition-duration-enter: 400ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    color-scheme: dark;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-text font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  ::selection {
+    background: var(--primary-muted);
+    color: var(--text-default);
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background rounded-md;
+  }
 }
