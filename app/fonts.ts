@@ -3,13 +3,13 @@ import localFont from 'next/font/local'
 
 export const fontSans = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--ff-sans',
   display: 'swap',
 })
 
 export const fontMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--ff-mono',
   display: 'swap',
 })
 
@@ -17,7 +17,7 @@ export const fontMono = JetBrains_Mono({
 // Download from: https://www.fontshare.com/fonts/satoshi
 // Files needed: Satoshi-Regular.woff2, Satoshi-Medium.woff2, Satoshi-Bold.woff2, Satoshi-Black.woff2
 export const fontDisplay = localFont({
-  variable: '--font-display',
+  variable: '--ff-display',
   display: 'swap',
   src: [
     { path: '../public/fonts/satoshi/Satoshi-Regular.woff2', weight: '400', style: 'normal' },
