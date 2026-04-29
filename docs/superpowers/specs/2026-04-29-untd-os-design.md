@@ -42,9 +42,9 @@ V1 entregue em **4 fases sequenciais** dentro de um único projeto. Cada fase é
 
 | Camada | Escolha | Razão |
 |---|---|---|
-| Framework | **Next.js 15 (App Router)** | Server Components + route groups + boa DX |
+| Framework | **Next.js 16 (App Router)** | Server Components + route groups + boa DX |
 | Linguagem | **TypeScript** strict | 11 domínios exigem tipos sólidos |
-| Estilo | **Tailwind CSS v3** + CSS Variables | Estabilidade com shadcn; tokens DESIGN.md como vars no `:root` |
+| Estilo | **Tailwind CSS v4** + CSS Variables | `@theme` em CSS para geração de utilities; tokens DESIGN.md como vars no `:root` |
 | UI Primitives | **shadcn/ui** (Radix) calibrado ao DESIGN.md | Não usar tema padrão — todo componente customizado para tokens UNTD |
 | Fontes | `next/font` (Inter, JetBrains Mono) + Fontshare local (Satoshi) | Inter/Mono open-source via Google; Satoshi self-hosted para evitar layout shift |
 | Estado client | **Zustand** + middleware `persist` | Sem boilerplate; cada domínio um store; persistência automática |

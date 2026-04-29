@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the foundation (Phase 0) and CRM core (Phase 1) of UNTD OS — a Next.js 15 + TypeScript private CRM with mock-persistent localStorage data, ICP scoring engine, leads management, pipeline kanban, and visual identity from DESIGN.md.
+**Goal:** Build the foundation (Phase 0) and CRM core (Phase 1) of UNTD OS — a Next.js 16 + TypeScript private CRM with mock-persistent localStorage data, ICP scoring engine, leads management, pipeline kanban, and visual identity from DESIGN.md.
 
 **Architecture:** Next.js App Router with route group `(app)`, repository pattern with mock adapters (Supabase-ready), Zustand stores for client UI state, design tokens from DESIGN.md exposed as CSS vars + Tailwind theme + TS constants, framer-motion for the motion system, TanStack Table for leads, @dnd-kit for pipeline drag-and-drop.
 
-**Tech Stack:** Next.js 15, TypeScript strict, Tailwind v3, shadcn/ui (Radix calibrated to DESIGN.md), Zustand + persist, Framer Motion, react-hook-form + zod, @dnd-kit, TanStack Table v8, Recharts, date-fns, Lucide, Tiptap, Vitest.
+**Tech Stack:** Next.js 16, TypeScript strict, Tailwind v4, shadcn/ui (Radix calibrated to DESIGN.md), Zustand + persist, Framer Motion, react-hook-form + zod, @dnd-kit, TanStack Table v8, Recharts, date-fns, Lucide, Tiptap, Vitest.
 
 **Spec:** [docs/superpowers/specs/2026-04-29-untd-os-design.md](../specs/2026-04-29-untd-os-design.md)
 **Visual identity:** [PRODUCT.md](../../../PRODUCT.md), [DESIGN.md](../../../DESIGN.md)
@@ -129,7 +129,7 @@ Expected: both succeed. Default Next page builds.
 
 ```bash
 git add -A
-git commit -m "chore: bootstrap next.js 15 project with strict typescript"
+git commit -m "chore: bootstrap next.js 16 project with strict typescript"
 ```
 
 ---
