@@ -27,7 +27,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ICPScoreRing } from '@/components/shared/icp-score-ring'
+import { ICPScorePopover } from '@/components/leads/icp-score-popover'
 import { TemperatureBadge } from '@/components/shared/temperature-badge'
 import { OriginTag } from '@/components/shared/origin-tag'
 import { tokens } from '@/lib/theme/tokens'
@@ -163,11 +163,10 @@ export function LeadDetailHeader({
 
           {/* Ring + actions */}
           <div className="flex shrink-0 items-center gap-5">
-            <ICPScoreRing
-              score={lead.icpScore}
+            <ICPScorePopover
+              lead={lead}
               size={72}
               strokeWidth={5}
-              showLabel
               pulse={lead.icpScore >= 80}
             />
 
