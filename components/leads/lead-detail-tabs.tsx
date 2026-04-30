@@ -1,13 +1,13 @@
 'use client'
 
 import {
-  History,
   MessageSquareText,
   NotebookPen,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { LeadOverview } from './lead-overview'
+import { LeadTimeline } from './lead-timeline'
 import type { Lead, PipelineStage } from '@/lib/types'
 
 interface Props {
@@ -28,11 +28,7 @@ export function LeadDetailTabs({ lead, stage }: Props) {
         <LeadOverview lead={lead} stage={stage} />
       </TabsContent>
       <TabsContent value="timeline">
-        <EmptyState
-          icon={History}
-          title="Timeline em construção"
-          description="As interações com esse lead aparecerão aqui na próxima task."
-        />
+        <LeadTimeline leadId={lead.id} />
       </TabsContent>
       <TabsContent value="notas">
         <EmptyState
