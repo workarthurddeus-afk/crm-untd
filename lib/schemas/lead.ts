@@ -21,10 +21,10 @@ export const leadInputSchema = z.object({
   company: z.string().min(1, 'Empresa obrigatória').max(120),
   role: z.string().max(120).optional(),
   niche: z.string().min(1, 'Nicho obrigatório').max(120),
-  website: z.string().url().optional().or(z.literal('')),
+  website: z.string().url('URL inválida').optional().or(z.literal('')),
   instagram: z.string().max(120).optional(),
   linkedin: z.string().max(200).optional(),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().max(40).optional(),
   location: z
     .object({
@@ -48,3 +48,4 @@ export const leadInputSchema = z.object({
 })
 
 export type LeadInputSchema = z.infer<typeof leadInputSchema>
+export type LeadInputSchemaInput = z.input<typeof leadInputSchema>

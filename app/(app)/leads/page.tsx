@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchX } from 'lucide-react'
-import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Button } from '@/components/ui/button'
 import { LeadsTable } from '@/components/leads/leads-table'
 import { LeadsToolbar } from '@/components/leads/leads-toolbar'
 import { LeadsTableSkeleton } from '@/components/leads/leads-table-skeleton'
+import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
 import { useLeads } from '@/lib/hooks/use-leads'
 import { usePipelineStages } from '@/lib/hooks/use-pipeline-stages'
 import { useICPProfile } from '@/lib/hooks/use-icp-profile'
@@ -23,6 +23,7 @@ export default function LeadsPage() {
   const { profile } = useICPProfile()
   const filters = useFiltersStore((s) => s.leads)
   const resetFilters = useFiltersStore((s) => s.resetLeadFilters)
+  const [showCreate, setShowCreate] = useState(false)
 
   // Recalculate ICP scores in storage when profile or leads change.
   // Only writes leads whose score actually changed, in parallel.
@@ -68,13 +69,7 @@ export default function LeadsPage() {
   return (
     <div>
       <PageHeader title="Leads" description={description} />
-      <LeadsToolbar
-        onCreate={() =>
-          toast.info('Formulário de novo lead chega na Task 19.', {
-            description: 'Por enquanto, edite via console ou seed.',
-          })
-        }
-      />
+      <LeadsToolbar onCreate={() => setShowCreate(true)} />
       <div className="px-8 py-6">
         {isLoading ? (
           <LeadsTableSkeleton />
@@ -93,6 +88,10 @@ export default function LeadsPage() {
           <LeadsTable leads={filtered} stages={stages} />
         )}
       </div>
+      <LeadFormDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+      />
     </div>
   )
 }
