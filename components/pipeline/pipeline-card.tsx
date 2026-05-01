@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -33,13 +33,17 @@ function followUpToneClass(tone: string): string {
 
 export function PipelineCard({ lead, isOverlay = false }: Props) {
   const router = useRouter()
-  const didDrag = useRef(false)
+  const wasDraggingRef = useRef(false)
   const prefersReducedMotion = useReducedMotion()
 
   const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
     id: lead.id,
     data: { lead },
   })
+
+  useEffect(() => {
+    if (isDragging) wasDraggingRef.current = true
+  }, [isDragging])
 
   const style = isOverlay
     ? undefined
@@ -53,17 +57,11 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
     ? nextFollowUpStatus(lead.nextFollowUpAt)
     : null
 
-  function handlePointerDown() {
-    didDrag.current = false
-  }
-
-  function handlePointerMove() {
-    didDrag.current = true
-  }
-
   function handleClick(e: React.MouseEvent) {
-    if (didDrag.current) {
+    if (wasDraggingRef.current) {
+      wasDraggingRef.current = false
       e.preventDefault()
+      e.stopPropagation()
       return
     }
     router.push(`/leads/${lead.id}`)
@@ -73,10 +71,8 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
     <div
       ref={isOverlay ? undefined : setNodeRef}
       style={style}
-      {...(isOverlay ? {} : listeners)}
       {...(isOverlay ? {} : attributes)}
-      onPointerDown={isOverlay ? undefined : handlePointerDown}
-      onPointerMove={isOverlay ? undefined : handlePointerMove}
+      {...(isOverlay ? {} : listeners)}
       onClick={isOverlay ? undefined : handleClick}
       className={cn(
         'bg-surface border border-border rounded-md p-3',
