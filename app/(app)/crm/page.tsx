@@ -1,17 +1,59 @@
-import { Badge } from '@/components/ui/badge'
+'use client'
+
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { PageHeader } from '@/components/shared/page-header'
+import { Button } from '@/components/ui/button'
+import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
+import { PipelineBoard } from '@/components/pipeline/pipeline-board'
+import { PipelineBoardSkeleton } from '@/components/pipeline/pipeline-board-skeleton'
+import { useLeads } from '@/lib/hooks/use-leads'
+import { usePipelineStages } from '@/lib/hooks/use-pipeline-stages'
 
 export default function CRMPage() {
+  const { leads, isLoading: leadsLoading } = useLeads()
+  const { stages, isLoading: stagesLoading } = usePipelineStages()
+  const [showCreate, setShowCreate] = useState(false)
+
+  const isLoading = leadsLoading || stagesLoading
+  const openLeads = leads.filter((l) => l.result === 'open')
+  const totalRevenue = openLeads.reduce((sum, l) => sum + (l.revenuePotential ?? 0), 0)
+
+  const description = (
+    <span>
+      <span className="font-display font-semibold text-text tabular-nums">
+        {openLeads.length}
+      </span>
+      <span className="text-text-muted"> leads ativos · </span>
+      <span className="font-display tabular-nums text-text-secondary">
+        R$ {totalRevenue.toLocaleString('pt-BR')}
+      </span>
+      <span className="text-text-muted"> em pipeline</span>
+    </span>
+  )
+
   return (
-    <div className="mx-auto max-w-6xl p-10">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-text">CRM / Pipeline</h1>
-          <p className="mt-1.5 text-sm text-text-muted">
-            Do primeiro contato à conversão. Sem ruído.
-          </p>
-        </div>
-        <Badge variant="outline">Em construção</Badge>
-      </div>
+    <div className="flex flex-col h-full min-h-0">
+      <PageHeader
+        title="CRM / Pipeline"
+        description={description}
+        actions={
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
+            <Plus aria-hidden />
+            Novo lead
+          </Button>
+        }
+      />
+      {isLoading ? (
+        <PipelineBoardSkeleton />
+      ) : (
+        <PipelineBoard
+          leads={leads}
+          stages={stages}
+          onNewLead={() => setShowCreate(true)}
+        />
+      )}
+      <LeadFormDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   )
 }
