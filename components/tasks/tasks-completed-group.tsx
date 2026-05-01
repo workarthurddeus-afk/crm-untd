@@ -7,14 +7,23 @@ import { cn } from '@/lib/utils/cn'
 import { TaskRow } from './task-row'
 import type { Task, Lead } from '@/lib/types'
 
+type CelebrationTone = 'completing' | 'reopening'
+
 interface Props {
   tasks: Task[]
   now: Date
   leadById: Map<string, Lead>
+  celebrating: Map<string, CelebrationTone>
   onToggle: (task: Task) => void
 }
 
-export function TasksCompletedGroup({ tasks, now, leadById, onToggle }: Props) {
+export function TasksCompletedGroup({
+  tasks,
+  now,
+  leadById,
+  celebrating,
+  onToggle,
+}: Props) {
   const [expanded, setExpanded] = useState(false)
   const shouldReduceMotion = useReducedMotion()
 
@@ -72,6 +81,7 @@ export function TasksCompletedGroup({ tasks, now, leadById, onToggle }: Props) {
                   task={task}
                   now={now}
                   leadById={leadById}
+                  celebrationTone={celebrating.get(task.id)}
                   onToggle={onToggle}
                 />
               ))}

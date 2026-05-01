@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Clock, Calendar, Link2 } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import { Badge } from '@/components/ui/badge'
@@ -17,15 +18,26 @@ import {
 } from '@/lib/utils/task-display'
 import type { Task, Lead } from '@/lib/types'
 
+type CelebrationTone = 'completing' | 'reopening'
+
 interface Props {
   task: Task
   now: Date
   leadById: Map<string, Lead>
   isPending?: boolean
+  celebrationTone?: CelebrationTone
   onToggle: (task: Task) => void
 }
 
-export function TaskRow({ task, now, leadById, isPending, onToggle }: Props) {
+export function TaskRow({
+  task,
+  now,
+  leadById,
+  isPending,
+  celebrationTone,
+  onToggle,
+}: Props) {
+  const reduced = useReducedMotion()
   const router = useRouter()
   const isDone = task.status === 'done' || task.status === 'cancelled'
   const duePill = task.dueDate ? computeDuePill(task.dueDate, now) : null
@@ -59,9 +71,24 @@ export function TaskRow({ task, now, leadById, isPending, onToggle }: Props) {
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
       )}
     >
+      {celebrationTone && (
+        <motion.div
+          aria-hidden
+          initial={reduced ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduced ? 0 : 0.15, ease: 'easeOut' }}
+          className={cn(
+            'pointer-events-none absolute inset-0 rounded-md',
+            celebrationTone === 'completing'
+              ? 'ring-1 ring-success/60 shadow-[0_0_20px_rgba(52,211,153,0.35)]'
+              : 'ring-1 ring-primary/60 shadow-[0_0_20px_rgba(83,50,234,0.35)]',
+          )}
+        />
+      )}
+
       <div
         className={cn(
-          'absolute left-0 top-3 bottom-3 w-0.5 rounded-full',
+          'absolute left-0 top-3 bottom-3 w-0.5 rounded-full z-[1]',
           importanceAccentClass[task.importance],
         )}
       />

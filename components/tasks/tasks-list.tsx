@@ -22,12 +22,15 @@ import {
 import type { Task, Lead } from '@/lib/types'
 import type { FilterId } from './tasks-filter-chips'
 
+type CelebrationTone = 'completing' | 'reopening'
+
 interface Props {
   tasks: Task[]
   filter: FilterId
   today: Date
   leadById: Map<string, Lead>
   pendingIds: Set<string>
+  celebrating: Map<string, CelebrationTone>
   onToggle: (task: Task) => void
 }
 
@@ -106,6 +109,7 @@ export function TasksList({
   today,
   leadById,
   pendingIds,
+  celebrating,
   onToggle,
 }: Props) {
   const filtered = useMemo(
@@ -149,6 +153,7 @@ export function TasksList({
                 now={today}
                 leadById={leadById}
                 isPending={pendingIds.has(task.id)}
+                celebrationTone={celebrating.get(task.id)}
                 onToggle={onToggle}
               />
             ))}
@@ -161,6 +166,7 @@ export function TasksList({
           tasks={completedGroup.tasks}
           now={today}
           leadById={leadById}
+          celebrating={celebrating}
           onToggle={onToggle}
         />
       )}

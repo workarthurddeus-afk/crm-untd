@@ -15,12 +15,19 @@ import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
 import type { Task, TaskStatus } from '@/lib/types'
 
+export type CelebrationTone = 'completing' | 'reopening'
+
+const CELEBRATION_DURATION_MS = 300
+
 export default function TasksPage() {
   const { tasks, isLoading: tasksLoading } = useTasks()
   const { leads, isLoading: leadsLoading } = useLeads()
   const [filter, setFilter] = useState<FilterId>('todas')
   const [overrides, setOverrides] = useState<Map<string, TaskStatus>>(new Map())
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
+  const [celebrating, setCelebrating] = useState<Map<string, CelebrationTone>>(
+    new Map(),
+  )
 
   const today = useMemo(() => new Date(), [])
 
@@ -60,48 +67,71 @@ export default function TasksPage() {
     </span>
   )
 
-  const handleToggle = useCallback(async (task: Task) => {
-    const effectiveStatus = overrides.get(task.id) ?? task.status
-    const next: TaskStatus = effectiveStatus === 'done' ? 'pending' : 'done'
+  const handleToggle = useCallback(
+    async (task: Task) => {
+      if (celebrating.has(task.id) || pendingIds.has(task.id)) return
 
-    setOverrides((prev) => {
-      const m = new Map(prev)
-      m.set(task.id, next)
-      return m
-    })
-    setPendingIds((prev) => {
-      const s = new Set(prev)
-      s.add(task.id)
-      return s
-    })
+      const effectiveStatus = overrides.get(task.id) ?? task.status
+      const next: TaskStatus = effectiveStatus === 'done' ? 'pending' : 'done'
+      const tone: CelebrationTone =
+        next === 'done' ? 'completing' : 'reopening'
 
-    try {
-      await tasksRepo.update(task.id, { status: next })
-      toast.success(next === 'done' ? 'Tarefa concluída' : 'Tarefa reaberta', {
-        description: task.title,
-      })
-    } catch (err) {
-      setOverrides((prev) => {
+      setCelebrating((prev) => {
         const m = new Map(prev)
-        m.delete(task.id)
+        m.set(task.id, tone)
         return m
       })
-      toast.error('Falha ao atualizar', {
-        description: err instanceof Error ? err.message : String(err),
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, CELEBRATION_DURATION_MS),
+      )
+
+      setOverrides((prev) => {
+        const m = new Map(prev)
+        m.set(task.id, next)
+        return m
       })
-    } finally {
       setPendingIds((prev) => {
         const s = new Set(prev)
-        s.delete(task.id)
+        s.add(task.id)
         return s
       })
-      setOverrides((prev) => {
+      setCelebrating((prev) => {
         const m = new Map(prev)
         m.delete(task.id)
         return m
       })
-    }
-  }, [overrides])
+
+      try {
+        await tasksRepo.update(task.id, { status: next })
+        toast.success(
+          next === 'done' ? 'Tarefa concluída' : 'Tarefa reaberta',
+          { description: task.title },
+        )
+      } catch (err) {
+        setOverrides((prev) => {
+          const m = new Map(prev)
+          m.delete(task.id)
+          return m
+        })
+        toast.error('Falha ao atualizar', {
+          description: err instanceof Error ? err.message : String(err),
+        })
+      } finally {
+        setPendingIds((prev) => {
+          const s = new Set(prev)
+          s.delete(task.id)
+          return s
+        })
+        setOverrides((prev) => {
+          const m = new Map(prev)
+          m.delete(task.id)
+          return m
+        })
+      }
+    },
+    [overrides, celebrating, pendingIds],
+  )
 
   const isLoading = tasksLoading || leadsLoading
 
@@ -157,6 +187,7 @@ export default function TasksPage() {
               today={today}
               leadById={leadById}
               pendingIds={pendingIds}
+              celebrating={celebrating}
               onToggle={handleToggle}
             />
           </div>
