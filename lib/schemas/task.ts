@@ -24,3 +24,5 @@ export const taskInputSchema = z.object({
   relatedNoteId: z.string().optional(),
   tagIds: z.array(z.string()).default([]),
 })
+
+export type TaskInputSchema = z.infer<typeof taskInputSchema>
