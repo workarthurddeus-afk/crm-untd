@@ -16,9 +16,12 @@ import {
   computeDuePill,
   dueToneTextClass,
 } from '@/lib/utils/task-display'
+import { TASK_CELEBRATION_COMPLETING_MS } from '@/lib/constants/task-celebration'
 import type { Task, Lead } from '@/lib/types'
 
 type CelebrationTone = 'completing' | 'reopening'
+
+const COMPLETING_DURATION_S = TASK_CELEBRATION_COMPLETING_MS / 1000
 
 interface Props {
   task: Task
@@ -52,8 +55,10 @@ export function TaskRow({
     toast.info('Detalhe da tarefa chega depois.')
   }
 
+  const isFadingOut = celebrationTone === 'completing' && !reduced
+
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       onClick={handleRowClick}
@@ -63,12 +68,34 @@ export function TaskRow({
           handleRowClick()
         }
       }}
+      animate={
+        isFadingOut
+          ? { opacity: [1, 1, 0], scale: [1, 1, 0.985] }
+          : { opacity: 1, scale: 1 }
+      }
+      transition={
+        isFadingOut
+          ? {
+              opacity: {
+                duration: COMPLETING_DURATION_S,
+                times: [0, 0.3, 1],
+                ease: [0.4, 0, 0.6, 1],
+              },
+              scale: {
+                duration: COMPLETING_DURATION_S,
+                times: [0, 0.3, 1],
+                ease: [0.4, 0, 0.6, 1],
+              },
+            }
+          : { duration: 0 }
+      }
       className={cn(
         'group relative flex items-start gap-3 rounded-md py-3 px-4 -mx-4',
         'cursor-pointer select-none',
         'hover:bg-surface-elevated/40',
         'transition-colors duration-fast',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        'will-change-[opacity,transform]',
       )}
     >
       {celebrationTone && (
@@ -76,11 +103,11 @@ export function TaskRow({
           aria-hidden
           initial={reduced ? { opacity: 1 } : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: reduced ? 0 : 0.15, ease: 'easeOut' }}
+          transition={{ duration: reduced ? 0 : 0.2, ease: 'easeOut' }}
           className={cn(
             'pointer-events-none absolute inset-0 rounded-md',
             celebrationTone === 'completing'
-              ? 'ring-1 ring-success/60 shadow-[0_0_20px_rgba(52,211,153,0.35)]'
+              ? 'ring-2 ring-success/50 shadow-[0_0_28px_rgba(52,211,153,0.4)]'
               : 'ring-1 ring-primary/60 shadow-[0_0_20px_rgba(83,50,234,0.35)]',
           )}
         />
@@ -165,6 +192,6 @@ export function TaskRow({
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { Plus, ListChecks } from 'lucide-react'
+import { useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
@@ -13,15 +14,19 @@ import { tasksOverdue } from '@/lib/services/tasks.service'
 import { TasksFilterChips, type FilterId } from '@/components/tasks/tasks-filter-chips'
 import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
+import {
+  TASK_CELEBRATION_COMPLETING_MS,
+  TASK_CELEBRATION_REOPENING_MS,
+  TASK_CELEBRATION_REDUCED_MS,
+} from '@/lib/constants/task-celebration'
 import type { Task, TaskStatus } from '@/lib/types'
 
 export type CelebrationTone = 'completing' | 'reopening'
 
-const CELEBRATION_DURATION_MS = 300
-
 export default function TasksPage() {
   const { tasks, isLoading: tasksLoading } = useTasks()
   const { leads, isLoading: leadsLoading } = useLeads()
+  const reduced = useReducedMotion()
   const [filter, setFilter] = useState<FilterId>('todas')
   const [overrides, setOverrides] = useState<Map<string, TaskStatus>>(new Map())
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
@@ -82,9 +87,13 @@ export default function TasksPage() {
         return m
       })
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, CELEBRATION_DURATION_MS),
-      )
+      const duration = reduced
+        ? TASK_CELEBRATION_REDUCED_MS
+        : tone === 'completing'
+          ? TASK_CELEBRATION_COMPLETING_MS
+          : TASK_CELEBRATION_REOPENING_MS
+
+      await new Promise((resolve) => setTimeout(resolve, duration))
 
       setOverrides((prev) => {
         const m = new Map(prev)
@@ -130,7 +139,7 @@ export default function TasksPage() {
         })
       }
     },
-    [overrides, celebrating, pendingIds],
+    [overrides, celebrating, pendingIds, reduced],
   )
 
   const isLoading = tasksLoading || leadsLoading
