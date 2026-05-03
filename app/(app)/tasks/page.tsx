@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { Plus, ListChecks } from 'lucide-react'
-import { useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
@@ -14,25 +13,14 @@ import { tasksOverdue } from '@/lib/services/tasks.service'
 import { TasksFilterChips, type FilterId } from '@/components/tasks/tasks-filter-chips'
 import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
-import {
-  TASK_CELEBRATION_COMPLETING_MS,
-  TASK_CELEBRATION_REOPENING_MS,
-  TASK_CELEBRATION_REDUCED_MS,
-} from '@/lib/constants/task-celebration'
 import type { Task, TaskStatus } from '@/lib/types'
-
-export type CelebrationTone = 'completing' | 'reopening'
 
 export default function TasksPage() {
   const { tasks, isLoading: tasksLoading } = useTasks()
   const { leads, isLoading: leadsLoading } = useLeads()
-  const reduced = useReducedMotion()
   const [filter, setFilter] = useState<FilterId>('todas')
   const [overrides, setOverrides] = useState<Map<string, TaskStatus>>(new Map())
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
-  const [celebrating, setCelebrating] = useState<Map<string, CelebrationTone>>(
-    new Map(),
-  )
 
   const today = useMemo(() => new Date(), [])
 
@@ -74,26 +62,10 @@ export default function TasksPage() {
 
   const handleToggle = useCallback(
     async (task: Task) => {
-      if (celebrating.has(task.id) || pendingIds.has(task.id)) return
+      if (pendingIds.has(task.id)) return
 
       const effectiveStatus = overrides.get(task.id) ?? task.status
       const next: TaskStatus = effectiveStatus === 'done' ? 'pending' : 'done'
-      const tone: CelebrationTone =
-        next === 'done' ? 'completing' : 'reopening'
-
-      setCelebrating((prev) => {
-        const m = new Map(prev)
-        m.set(task.id, tone)
-        return m
-      })
-
-      const duration = reduced
-        ? TASK_CELEBRATION_REDUCED_MS
-        : tone === 'completing'
-          ? TASK_CELEBRATION_COMPLETING_MS
-          : TASK_CELEBRATION_REOPENING_MS
-
-      await new Promise((resolve) => setTimeout(resolve, duration))
 
       setOverrides((prev) => {
         const m = new Map(prev)
@@ -104,11 +76,6 @@ export default function TasksPage() {
         const s = new Set(prev)
         s.add(task.id)
         return s
-      })
-      setCelebrating((prev) => {
-        const m = new Map(prev)
-        m.delete(task.id)
-        return m
       })
 
       try {
@@ -139,7 +106,7 @@ export default function TasksPage() {
         })
       }
     },
-    [overrides, celebrating, pendingIds, reduced],
+    [overrides, pendingIds],
   )
 
   const isLoading = tasksLoading || leadsLoading
@@ -196,7 +163,6 @@ export default function TasksPage() {
               today={today}
               leadById={leadById}
               pendingIds={pendingIds}
-              celebrating={celebrating}
               onToggle={handleToggle}
             />
           </div>

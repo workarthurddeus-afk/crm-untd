@@ -1,9 +1,10 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Clock, Calendar, Link2 } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import { Badge } from '@/components/ui/badge'
@@ -16,38 +17,72 @@ import {
   computeDuePill,
   dueToneTextClass,
 } from '@/lib/utils/task-display'
-import { TASK_CELEBRATION_COMPLETING_MS } from '@/lib/constants/task-celebration'
-import type { Task, Lead } from '@/lib/types'
+import {
+  TASK_CELEBRATION_COMPLETING_MS,
+  TASK_CELEBRATION_REOPENING_MS,
+  TASK_CELEBRATION_REDUCED_MS,
+} from '@/lib/constants/task-celebration'
+import type { Task, TaskStatus, Lead } from '@/lib/types'
 
-type CelebrationTone = 'completing' | 'reopening'
-
-const COMPLETING_DURATION_S = TASK_CELEBRATION_COMPLETING_MS / 1000
+type TransitionPhase = 'completing' | 'reopening' | null
 
 interface Props {
   task: Task
   now: Date
   leadById: Map<string, Lead>
   isPending?: boolean
-  celebrationTone?: CelebrationTone
   onToggle: (task: Task) => void
 }
 
-export function TaskRow({
-  task,
-  now,
-  leadById,
-  isPending,
-  celebrationTone,
-  onToggle,
-}: Props) {
-  const reduced = useReducedMotion()
+export function TaskRow({ task, now, leadById, isPending, onToggle }: Props) {
   const router = useRouter()
+  const reduced = useReducedMotion()
+  const [phase, setPhase] = useState<TransitionPhase>(null)
+  const timerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
+
   const isDone = task.status === 'done' || task.status === 'cancelled'
+  const isCompleting = phase === 'completing'
+  const isReopening = phase === 'reopening'
+  const isTransitioning = phase !== null
+
+  const displayStatus: TaskStatus = isCompleting
+    ? 'done'
+    : isReopening
+      ? 'pending'
+      : task.status
+
   const duePill = task.dueDate ? computeDuePill(task.dueDate, now) : null
   const tone = categoryTone(task.category)
-  const relatedLead = task.relatedLeadId ? leadById.get(task.relatedLeadId) : undefined
+  const relatedLead = task.relatedLeadId
+    ? leadById.get(task.relatedLeadId)
+    : undefined
+
+  function handleCheckboxToggle() {
+    if (isTransitioning || isPending) return
+    const next: TransitionPhase = isDone ? 'reopening' : 'completing'
+    setPhase(next)
+
+    const duration = reduced
+      ? TASK_CELEBRATION_REDUCED_MS
+      : next === 'completing'
+        ? TASK_CELEBRATION_COMPLETING_MS
+        : TASK_CELEBRATION_REOPENING_MS
+
+    timerRef.current = window.setTimeout(() => {
+      onToggle(task)
+    }, duration)
+  }
 
   function handleRowClick() {
+    if (isTransitioning) return
     if (relatedLead) {
       router.push(`/leads/${relatedLead.id}`)
       return
@@ -55,10 +90,8 @@ export function TaskRow({
     toast.info('Detalhe da tarefa chega depois.')
   }
 
-  const isFadingOut = celebrationTone === 'completing' && !reduced
-
   return (
-    <motion.div
+    <div
       role="button"
       tabIndex={0}
       onClick={handleRowClick}
@@ -68,51 +101,25 @@ export function TaskRow({
           handleRowClick()
         }
       }}
-      animate={
-        isFadingOut
-          ? { opacity: [1, 1, 0], scale: [1, 1, 0.985] }
-          : { opacity: 1, scale: 1 }
-      }
-      transition={
-        isFadingOut
-          ? {
-              opacity: {
-                duration: COMPLETING_DURATION_S,
-                times: [0, 0.3, 1],
-                ease: [0.4, 0, 0.6, 1],
-              },
-              scale: {
-                duration: COMPLETING_DURATION_S,
-                times: [0, 0.3, 1],
-                ease: [0.4, 0, 0.6, 1],
-              },
-            }
-          : { duration: 0 }
-      }
       className={cn(
         'group relative flex items-start gap-3 rounded-md py-3 px-4 -mx-4',
         'cursor-pointer select-none',
         'hover:bg-surface-elevated/40',
-        'transition-colors duration-fast',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        'will-change-[opacity,transform]',
+        !isTransitioning && 'transition-colors duration-fast',
+        isTransitioning && !reduced && [
+          'transition-opacity ease-[cubic-bezier(0.4,0,0.6,1)]',
+          isCompleting && 'duration-[1200ms]',
+          isReopening && 'duration-[800ms]',
+          'opacity-0 pointer-events-none',
+        ],
+        isTransitioning && reduced && 'opacity-0 pointer-events-none',
+        isCompleting &&
+          'ring-2 ring-success/30 shadow-[0_0_24px_rgba(52,211,153,0.3)]',
+        isReopening &&
+          'ring-1 ring-primary/30 shadow-[0_0_18px_rgba(83,50,234,0.25)]',
       )}
     >
-      {celebrationTone && (
-        <motion.div
-          aria-hidden
-          initial={reduced ? { opacity: 1 } : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: reduced ? 0 : 0.2, ease: 'easeOut' }}
-          className={cn(
-            'pointer-events-none absolute inset-0 rounded-md',
-            celebrationTone === 'completing'
-              ? 'ring-2 ring-success/50 shadow-[0_0_28px_rgba(52,211,153,0.4)]'
-              : 'ring-1 ring-primary/60 shadow-[0_0_20px_rgba(83,50,234,0.35)]',
-          )}
-        />
-      )}
-
       <div
         className={cn(
           'absolute left-0 top-3 bottom-3 w-0.5 rounded-full z-[1]',
@@ -122,10 +129,10 @@ export function TaskRow({
 
       <div className="mt-0.5 shrink-0">
         <TaskCheckbox
-          status={task.status}
+          status={displayStatus}
           title={task.title}
-          isPending={isPending}
-          onToggle={() => onToggle(task)}
+          isPending={isPending && !isTransitioning}
+          onToggle={handleCheckboxToggle}
         />
       </div>
 
@@ -192,6 +199,6 @@ export function TaskRow({
           ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
