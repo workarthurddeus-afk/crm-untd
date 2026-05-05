@@ -16,8 +16,6 @@ export function useInteractions(leadId: string | null) {
 
   useEffect(() => {
     if (!leadId) {
-      setInteractions([])
-      setIsLoading(false)
       return
     }
 
@@ -40,5 +38,8 @@ export function useInteractions(leadId: string | null) {
     }
   }, [leadId])
 
-  return { interactions, isLoading }
+  return {
+    interactions: leadId ? interactions : [],
+    isLoading: leadId ? isLoading : false,
+  }
 }

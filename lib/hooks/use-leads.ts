@@ -37,8 +37,6 @@ export function useLead(id: string | null) {
 
   useEffect(() => {
     if (!id) {
-      setLead(null)
-      setIsLoading(false)
       return
     }
 
@@ -61,5 +59,8 @@ export function useLead(id: string | null) {
     }
   }, [id])
 
-  return { lead, isLoading }
+  return {
+    lead: id ? lead : null,
+    isLoading: id ? isLoading : false,
+  }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useUIStore } from '@/lib/stores'
@@ -54,14 +54,14 @@ function UNTDGlyph({ className }: { className?: string }) {
 
 export function Sidebar() {
   // Hydration guard: always render expanded on SSR, rehydrate on client
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const toggle = useUIStore((s) => s.toggleSidebar)
   const reducedMotion = useReducedMotion()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Before hydration — always show expanded to match SSR, suppress width transition
   const isCollapsed = mounted && collapsed

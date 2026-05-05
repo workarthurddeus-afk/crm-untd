@@ -37,8 +37,6 @@ export function useTask(id: string | null) {
 
   useEffect(() => {
     if (!id) {
-      setTask(null)
-      setIsLoading(false)
       return
     }
 
@@ -61,5 +59,8 @@ export function useTask(id: string | null) {
     }
   }, [id])
 
-  return { task, isLoading }
+  return {
+    task: id ? task : null,
+    isLoading: id ? isLoading : false,
+  }
 }
