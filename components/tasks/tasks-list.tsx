@@ -29,6 +29,7 @@ interface Props {
   leadById: Map<string, Lead>
   pendingIds: Set<string>
   onToggle: (task: Task) => void
+  onOpenTask: (task: Task) => void
 }
 
 function filterTasks(allTasks: Task[], filterId: FilterId, today: Date): Task[] {
@@ -107,6 +108,7 @@ export function TasksList({
   leadById,
   pendingIds,
   onToggle,
+  onOpenTask,
 }: Props) {
   const filtered = useMemo(
     () => filterTasks(tasks, filter, today),
@@ -150,6 +152,7 @@ export function TasksList({
                 leadById={leadById}
                 isPending={pendingIds.has(task.id)}
                 onToggle={onToggle}
+                onOpen={onOpenTask}
               />
             ))}
           </div>
@@ -162,6 +165,7 @@ export function TasksList({
           now={today}
           leadById={leadById}
           onToggle={onToggle}
+          onOpenTask={onOpenTask}
         />
       )}
     </div>

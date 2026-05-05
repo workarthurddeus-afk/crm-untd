@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Clock, Calendar, Link2 } from 'lucide-react'
 import { useReducedMotion } from 'framer-motion'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import { Badge } from '@/components/ui/badge'
 import { TaskCheckbox } from './task-checkbox'
@@ -32,10 +30,10 @@ interface Props {
   leadById: Map<string, Lead>
   isPending?: boolean
   onToggle: (task: Task) => void
+  onOpen: (task: Task) => void
 }
 
-export function TaskRow({ task, now, leadById, isPending, onToggle }: Props) {
-  const router = useRouter()
+export function TaskRow({ task, now, leadById, isPending, onToggle, onOpen }: Props) {
   const reduced = useReducedMotion()
   const [phase, setPhase] = useState<TransitionPhase>(null)
   const timerRef = useRef<number | null>(null)
@@ -83,17 +81,14 @@ export function TaskRow({ task, now, leadById, isPending, onToggle }: Props) {
 
   function handleRowClick() {
     if (isTransitioning) return
-    if (relatedLead) {
-      router.push(`/leads/${relatedLead.id}`)
-      return
-    }
-    toast.info('Detalhe da tarefa chega depois.')
+    onOpen(task)
   }
 
   return (
     <div
       role="button"
       tabIndex={0}
+      aria-label={`Editar tarefa ${task.title}`}
       onClick={handleRowClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

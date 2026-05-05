@@ -8,19 +8,32 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useTasks } from '@/lib/hooks/use-tasks'
 import { useLeads } from '@/lib/hooks/use-leads'
-import { tasksRepo } from '@/lib/repositories/tasks.repository'
+import { useNotes } from '@/lib/hooks/use-notes'
 import { tasksOverdue } from '@/lib/services/tasks.service'
 import { TasksFilterChips, type FilterId } from '@/components/tasks/tasks-filter-chips'
 import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
-import type { Task, TaskStatus } from '@/lib/types'
+import { TaskFormSheet } from '@/components/tasks/task-form-sheet'
+import type { Task, TaskInput, TaskStatus } from '@/lib/types'
 
 export default function TasksPage() {
-  const { tasks, isLoading: tasksLoading } = useTasks()
+  const {
+    tasks,
+    isLoading: tasksLoading,
+    createTask,
+    updateTask,
+    completeTask,
+    reopenTask,
+    cancelTask,
+    postponeTask,
+  } = useTasks()
   const { leads, isLoading: leadsLoading } = useLeads()
+  const { notes } = useNotes()
   const [filter, setFilter] = useState<FilterId>('todas')
   const [overrides, setOverrides] = useState<Map<string, TaskStatus>>(new Map())
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
+  const [taskSheetOpen, setTaskSheetOpen] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   const today = useMemo(() => new Date(), [])
 
@@ -41,6 +54,10 @@ export default function TasksPage() {
     (t) => t.status !== 'done' && t.status !== 'cancelled',
   ).length
   const overdueCount = tasksOverdue(effectiveTasks, today).length
+  const selectedTask = useMemo(
+    () => tasks.find((task) => task.id === selectedTaskId) ?? null,
+    [tasks, selectedTaskId],
+  )
 
   const description = (
     <span>
@@ -65,7 +82,10 @@ export default function TasksPage() {
       if (pendingIds.has(task.id)) return
 
       const effectiveStatus = overrides.get(task.id) ?? task.status
-      const next: TaskStatus = effectiveStatus === 'done' ? 'pending' : 'done'
+      const next: TaskStatus =
+        effectiveStatus === 'done' || effectiveStatus === 'cancelled'
+          ? 'pending'
+          : 'done'
 
       setOverrides((prev) => {
         const m = new Map(prev)
@@ -79,7 +99,7 @@ export default function TasksPage() {
       })
 
       try {
-        await tasksRepo.update(task.id, { status: next })
+        await (next === 'done' ? completeTask(task.id) : reopenTask(task.id))
         toast.success(
           next === 'done' ? 'Tarefa concluída' : 'Tarefa reaberta',
           { description: task.title },
@@ -106,7 +126,27 @@ export default function TasksPage() {
         })
       }
     },
-    [overrides, pendingIds],
+    [completeTask, overrides, pendingIds, reopenTask],
+  )
+
+  const openNewTask = useCallback(() => {
+    setSelectedTaskId(null)
+    setTaskSheetOpen(true)
+  }, [])
+
+  const openTask = useCallback((task: Task) => {
+    setSelectedTaskId(task.id)
+    setTaskSheetOpen(true)
+  }, [])
+
+  const handleCreateTask = useCallback(
+    async (input: TaskInput) => createTask(input),
+    [createTask],
+  )
+
+  const handleUpdateTask = useCallback(
+    async (id: string, input: Partial<TaskInput>) => updateTask(id, input),
+    [updateTask],
   )
 
   const isLoading = tasksLoading || leadsLoading
@@ -119,7 +159,7 @@ export default function TasksPage() {
         actions={
           <Button
             variant="primary"
-            onClick={() => toast.info('Criação chega na próxima task.')}
+            onClick={openNewTask}
           >
             <Plus aria-hidden />
             Nova tarefa
@@ -138,7 +178,7 @@ export default function TasksPage() {
             action={
               <Button
                 variant="primary"
-                onClick={() => toast.info('Criação chega na próxima task.')}
+                onClick={openNewTask}
               >
                 <Plus aria-hidden />
                 Nova tarefa
@@ -164,10 +204,25 @@ export default function TasksPage() {
               leadById={leadById}
               pendingIds={pendingIds}
               onToggle={handleToggle}
+              onOpenTask={openTask}
             />
           </div>
         </>
       )}
+
+      <TaskFormSheet
+        open={taskSheetOpen}
+        task={selectedTask}
+        leads={leads}
+        notes={notes}
+        onOpenChange={setTaskSheetOpen}
+        onCreate={handleCreateTask}
+        onUpdate={handleUpdateTask}
+        onComplete={completeTask}
+        onReopen={reopenTask}
+        onCancelTask={cancelTask}
+        onPostpone={postponeTask}
+      />
     </div>
   )
 }

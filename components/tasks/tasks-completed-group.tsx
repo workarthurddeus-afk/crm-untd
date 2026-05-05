@@ -12,6 +12,7 @@ interface Props {
   now: Date
   leadById: Map<string, Lead>
   onToggle: (task: Task) => void
+  onOpenTask: (task: Task) => void
 }
 
 export function TasksCompletedGroup({
@@ -19,6 +20,7 @@ export function TasksCompletedGroup({
   now,
   leadById,
   onToggle,
+  onOpenTask,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const shouldReduceMotion = useReducedMotion()
@@ -78,6 +80,7 @@ export function TasksCompletedGroup({
                   now={now}
                   leadById={leadById}
                   onToggle={onToggle}
+                  onOpen={onOpenTask}
                 />
               ))}
             </div>
