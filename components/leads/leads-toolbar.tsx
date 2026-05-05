@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, RotateCcw, Search } from 'lucide-react'
+import { Filter, Plus, RotateCcw, Search } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  getActiveLeadFiltersCount,
+  LeadsFilterSheet,
+} from '@/components/leads/leads-filter-sheet'
 import {
   defaultLeadFilters,
   useFiltersStore,
@@ -34,6 +39,7 @@ export function LeadsToolbar({ onCreate }: Props) {
   const filters = useFiltersStore((s) => s.leads)
   const setFilters = useFiltersStore((s) => s.setLeadFilters)
   const reset = useFiltersStore((s) => s.resetLeadFilters)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   // Lazy initializer so we read the persisted store value once on mount only.
   const [searchInput, setSearchInput] = useState(() =>
@@ -59,9 +65,13 @@ export function LeadsToolbar({ onCreate }: Props) {
   }, [filters.search])
 
   const hasActiveFilters = useMemo(() => !isDefaultFilters(filters), [filters])
+  const activeFilterCount = useMemo(
+    () => getActiveLeadFiltersCount(filters),
+    [filters]
+  )
 
   return (
-    <div className="flex items-center gap-3 border-b border-border bg-surface px-8 py-3">
+    <div className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-8 py-3">
       <div className="relative w-full max-w-md flex-1">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted"
@@ -76,6 +86,24 @@ export function LeadsToolbar({ onCreate }: Props) {
           aria-label="Buscar leads"
         />
       </div>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setFilterSheetOpen(true)}
+        aria-label={`Abrir filtros de leads${activeFilterCount > 0 ? `, ${activeFilterCount} ativos` : ''}`}
+        className="relative"
+      >
+        <Filter className="h-3.5 w-3.5" strokeWidth={1.75} />
+        Filtros
+        {activeFilterCount > 0 && (
+          <Badge
+            variant="default"
+            className="ml-0.5 min-w-5 justify-center px-1.5 py-0 text-[10px]"
+          >
+            {activeFilterCount}
+          </Badge>
+        )}
+      </Button>
       <Button
         variant="ghost"
         size="sm"
@@ -94,6 +122,10 @@ export function LeadsToolbar({ onCreate }: Props) {
         <Plus className="h-4 w-4" strokeWidth={2} />
         Novo lead
       </Button>
+      <LeadsFilterSheet
+        open={filterSheetOpen}
+        onOpenChange={setFilterSheetOpen}
+      />
     </div>
   )
 }
