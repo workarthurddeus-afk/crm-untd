@@ -22,7 +22,38 @@ export const taskInputSchema = z.object({
   ]),
   relatedLeadId: z.string().optional(),
   relatedNoteId: z.string().optional(),
+  relatedCalendarEventId: z.string().optional(),
+  relatedFeedbackId: z.string().optional(),
+  source: z.enum([
+    'manual',
+    'lead',
+    'note',
+    'calendar',
+    'feedback',
+    'ai',
+    'import',
+    'dashboard',
+    'crm',
+  ]).optional(),
+  color: z.enum([
+    'default',
+    'purple',
+    'violet',
+    'blue',
+    'cyan',
+    'green',
+    'yellow',
+    'orange',
+    'red',
+    'pink',
+    'slate',
+  ]).optional(),
+  completedAt: z.string().optional(),
+  cancelledAt: z.string().optional(),
+  archivedAt: z.string().optional(),
   tagIds: z.array(z.string()).default([]),
 })
 
 export type TaskInputSchema = z.infer<typeof taskInputSchema>
+export const taskUpdateSchema = taskInputSchema.partial()
+export type TaskUpdateSchema = z.infer<typeof taskUpdateSchema>

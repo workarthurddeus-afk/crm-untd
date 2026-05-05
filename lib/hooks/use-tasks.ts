@@ -1,12 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { tasksRepo } from '@/lib/repositories/tasks.repository'
-import type { Task } from '@/lib/types'
+import {
+  cancelTask as cancelTaskAction,
+  completeTask as completeTaskAction,
+  createTask as createTaskAction,
+  postponeTask as postponeTaskAction,
+  reopenTask as reopenTaskAction,
+  uncompleteTask as uncompleteTaskAction,
+  updateTask as updateTaskAction,
+} from '@/lib/services/tasks.service'
+import type { Task, TaskInput } from '@/lib/types'
 
 export function useTasks(filters?: Partial<Task>) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const actions = useTaskActions()
 
   useEffect(() => {
     let active = true
@@ -28,7 +38,7 @@ export function useTasks(filters?: Partial<Task>) {
     }
   }, [filters])
 
-  return { tasks, isLoading }
+  return { tasks, isLoading, ...actions }
 }
 
 export function useTask(id: string | null) {
@@ -62,5 +72,34 @@ export function useTask(id: string | null) {
   return {
     task: id ? task : null,
     isLoading: id ? isLoading : false,
+  }
+}
+
+export function useTaskActions() {
+  const createTask = useCallback((input: TaskInput) => createTaskAction(input), [])
+  const updateTask = useCallback(
+    (id: string, input: Partial<TaskInput>) => updateTaskAction(id, input),
+    []
+  )
+  const completeTask = useCallback((id: string, completedAt?: string) => {
+    return completeTaskAction(id, completedAt)
+  }, [])
+  const reopenTask = useCallback((id: string) => reopenTaskAction(id), [])
+  const uncompleteTask = useCallback((id: string) => uncompleteTaskAction(id), [])
+  const cancelTask = useCallback((id: string, cancelledAt?: string) => {
+    return cancelTaskAction(id, cancelledAt)
+  }, [])
+  const postponeTask = useCallback((id: string, newDueDate: string) => {
+    return postponeTaskAction(id, newDueDate)
+  }, [])
+
+  return {
+    createTask,
+    updateTask,
+    completeTask,
+    reopenTask,
+    uncompleteTask,
+    cancelTask,
+    postponeTask,
   }
 }
