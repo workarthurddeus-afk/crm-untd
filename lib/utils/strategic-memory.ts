@@ -1,40 +1,82 @@
 import type { Note } from '@/lib/types'
+import { calculateNoteStrategicScore, normalizeNote, sortNotes } from '@/lib/utils/notes'
+
+export type StrategicMemoryType =
+  | 'daily_insight'
+  | 'forgotten_idea'
+  | 'high_impact'
+  | 'sales_learning'
+  | 'product_signal'
+  | 'feedback_pattern'
 
 export interface StrategicMemoryPick {
   note: Note
+  memoryType: StrategicMemoryType
   reason: string
+  score: number
 }
 
-export function getStrategicMemory(notes: Note[], today: Date): StrategicMemoryPick | null {
-  if (notes.length === 0) return null
+const productTypes = new Set(['product', 'feature', 'ui', 'brandkit', 'onboarding', 'improvement'])
 
-  const pinned = notes.filter(n => n.pinned)
-  if (pinned.length > 0) {
-    const pick = [...pinned].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]!
-    return { note: pick, reason: 'Fixada por você' }
+function daysSince(value: string | null | undefined, currentDate: Date): number {
+  if (!value) return Number.POSITIVE_INFINITY
+  return Math.floor((currentDate.getTime() - new Date(value).getTime()) / 86_400_000)
+}
+
+function getMemoryType(note: Note, currentDate: Date): StrategicMemoryType {
+  const stale = daysSince(note.lastViewedAt ?? note.updatedAt, currentDate) >= 30
+  if (stale && (note.type === 'idea' || note.impact === 'high')) return 'forgotten_idea'
+  if (note.type === 'sales') return 'sales_learning'
+  if (productTypes.has(note.type)) return 'product_signal'
+  if (note.type === 'feedback') return 'feedback_pattern'
+  if (note.impact === 'high') return 'high_impact'
+  return 'daily_insight'
+}
+
+function getReason(note: Note, memoryType: StrategicMemoryType): string {
+  if (memoryType === 'forgotten_idea') {
+    return 'Ideia antiga de alto impacto voltou para revisao estrategica.'
   }
-
-  const favorited = notes.filter(n => n.favorited)
-  if (favorited.length > 0) {
-    const pick = [...favorited].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]!
-    return { note: pick, reason: 'Marcada como favorita' }
+  if (memoryType === 'sales_learning') {
+    return 'Aprendizado comercial com potencial de melhorar prospeccao e follow-up.'
   }
-
-  const highImpactOld = [...notes]
-    .filter(n => n.expectedImpact === 'high' && n.status !== 'archived')
-    .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))
-  if (highImpactOld.length > 0) {
-    const pick = highImpactOld[0]!
-    const days = Math.floor((today.getTime() - new Date(pick.updatedAt).getTime()) / 86_400_000)
-    return { note: pick, reason: days > 7 ? `Alto impacto sem revisão há ${days} dias` : 'Selecionada por alto impacto' }
+  if (memoryType === 'product_signal') {
+    return 'Sinal de produto relevante para evoluir a experiencia do UNTD OS.'
   }
-
-  const strategic = notes.filter(n => n.type === 'strategic-decision' || n.type === 'sales-learning')
-  if (strategic.length > 0) {
-    const pick = [...strategic].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]!
-    return { note: pick, reason: 'Decisão estratégica recente' }
+  if (memoryType === 'feedback_pattern') {
+    return 'Padrao de feedback que pode virar melhoria ou oportunidade comercial.'
   }
+  if (memoryType === 'high_impact') {
+    return 'Nota de alto impacto priorizada para decisao ou execucao.'
+  }
+  if (note.isPinned) return 'Nota fixada para permanecer visivel no dashboard.'
+  if (note.isFavorite) return 'Nota favorita com valor estrategico recorrente.'
+  return 'Memoria estrategica selecionada para manter contexto vivo.'
+}
 
-  const pick = [...notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]!
-  return { note: pick, reason: 'Última anotação' }
+export function getStrategicMemory(notes: Note[], currentDate = new Date()): StrategicMemoryPick | null {
+  const candidates = notes
+    .map(normalizeNote)
+    .filter((note) => !note.isArchived && !note.isDeleted)
+    .map((note) => ({
+      note,
+      score: calculateNoteStrategicScore(note, currentDate),
+    }))
+    .filter((pick) => Number.isFinite(pick.score))
+    .sort((a, b) => {
+      const scoreDelta = b.score - a.score
+      if (scoreDelta !== 0) return scoreDelta
+      return sortNotes([a.note, b.note])[0]?.id === a.note.id ? -1 : 1
+    })
+
+  const best = candidates[0]
+  if (!best) return null
+
+  const memoryType = getMemoryType(best.note, currentDate)
+  return {
+    note: best.note,
+    memoryType,
+    reason: getReason(best.note, memoryType),
+    score: best.score,
+  }
 }

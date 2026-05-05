@@ -1,4 +1,5 @@
 export * from './lead'
 export * from './icp'
 export * from './note'
+export * from './note-folder'
 export * from './task'
