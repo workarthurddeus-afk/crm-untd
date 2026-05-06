@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { noteFoldersRepo } from '@/lib/repositories/note-folders.repository'
 import { notesRepo } from '@/lib/repositories/notes.repository'
+import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import {
+  createStrategicNote,
+  createTaskFromNote,
   getActionableNotes,
   getHighImpactLowEffortNotes,
   getNotesForDashboard,
@@ -19,6 +22,7 @@ describe('notes.service', () => {
     window.localStorage.clear()
     await noteFoldersRepo.reset()
     await notesRepo.reset()
+    await tasksRepo.reset()
   })
 
   it('getStrategicMemory returns a non-archived, non-deleted note', async () => {
@@ -89,5 +93,63 @@ describe('notes.service', () => {
     expect(actionable.length).toBeGreaterThan(0)
     expect(payload.title).toContain(actionable[0]!.title)
     expect(payload.relatedNoteId).toBe(actionable[0]!.id)
+    expect(payload.source).toBe('note')
+    expect(payload.tagIds).toEqual(actionable[0]!.tags)
+  })
+
+  it('createTaskFromNote creates a linked task and stores the task id on the note', async () => {
+    const note = await createStrategicNote({
+      title: 'Ideia de oferta operacional',
+      content: 'Transformar insight de pricing em acao comercial.',
+      type: 'idea',
+      status: 'active',
+      priority: 'high',
+      impact: 'high',
+      effort: 'low',
+      color: 'purple',
+      tags: ['pricing', 'oferta'],
+      source: 'manual',
+    })
+
+    const result = await createTaskFromNote(note.id)
+
+    expect(result.created).toBe(true)
+    expect(result.task).toMatchObject({
+      relatedNoteId: note.id,
+      source: 'note',
+      importance: 'high',
+      tagIds: ['pricing', 'oferta'],
+    })
+    expect(result.note.relatedTaskId).toBe(result.task.id)
+    await expect(notesRepo.getNoteById(note.id)).resolves.toMatchObject({
+      relatedTaskId: result.task.id,
+    })
+    await expect(tasksRepo.getById(result.task.id)).resolves.toMatchObject({
+      relatedNoteId: note.id,
+    })
+  })
+
+  it('createTaskFromNote reuses an existing linked task instead of duplicating', async () => {
+    const note = await createStrategicNote({
+      title: 'Aprendizado de follow-up',
+      content: 'Criar acao para responder leads mornos em ate 24 horas.',
+      type: 'sales',
+      status: 'active',
+      priority: 'medium',
+      impact: 'high',
+      effort: 'low',
+      color: 'green',
+      tags: ['follow-up', 'vendas'],
+      source: 'manual',
+    })
+
+    const first = await createTaskFromNote(note.id)
+    const second = await createTaskFromNote(note.id)
+    const linkedTasks = await tasksRepo.list({ relatedNoteId: note.id })
+
+    expect(first.created).toBe(true)
+    expect(second.created).toBe(false)
+    expect(second.task.id).toBe(first.task.id)
+    expect(linkedTasks).toHaveLength(1)
   })
 })

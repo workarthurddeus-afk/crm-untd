@@ -9,6 +9,7 @@ import {
   ArchiveRestore,
   ArrowUpRight,
   Briefcase,
+  CheckCircle2,
   CheckSquare,
   Copy,
   Heart,
@@ -48,7 +49,7 @@ interface Props {
   onToggleFavorite: () => Promise<void> | void
   onArchive: () => Promise<void> | void
   onRestore: () => Promise<void> | void
-  onTransformToTask: () => void
+  onTransformToTask: () => Promise<void> | void
   onEdit: () => void
   onCopyContent: () => void
   onTagClick: (tag: string) => void
@@ -253,8 +254,21 @@ export function NoteDetail({
             <Button variant="secondary" size="sm" onClick={onEdit}>
               <Pencil aria-hidden /> Editar
             </Button>
-            <Button variant="primary" size="sm" onClick={onTransformToTask}>
-              <CheckSquare aria-hidden /> Virar tarefa
+            <Button
+              variant={note.relatedTaskId ? 'secondary' : 'primary'}
+              size="sm"
+              onClick={() => guard('task', onTransformToTask)}
+              disabled={working === 'task'}
+            >
+              {note.relatedTaskId ? (
+                <>
+                  <CheckCircle2 aria-hidden /> Tarefa criada
+                </>
+              ) : (
+                <>
+                  <CheckSquare aria-hidden /> Virar tarefa
+                </>
+              )}
             </Button>
           </div>
         </div>

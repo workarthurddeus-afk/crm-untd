@@ -11,7 +11,6 @@ import {
   type NoteFilters,
   type NoteSort,
 } from '@/lib/utils/notes'
-import { getNoteTypeLabel } from '@/lib/utils/note-display'
 import { NotesPageHeader } from '@/components/notes/notes-page-header'
 import { NotesSidebar, type NotesActiveFilter } from '@/components/notes/notes-sidebar'
 import { NotesList } from '@/components/notes/notes-list'
@@ -192,11 +191,17 @@ export default function NotesPage() {
     }
   }
 
-  const handleTransformToTask = (note: Note) => {
-    const titlePreview = note.title.length > 48 ? `${note.title.slice(0, 48)}…` : note.title
-    toast.info(`"${titlePreview}"`, {
-      description: `Conversão de ${getNoteTypeLabel(note.type)} em tarefa em breve.`,
-    })
+  const handleTransformToTask = async (note: Note) => {
+    try {
+      const result = await actions.createTaskFromNote(note.id)
+      toast.success(result.created ? 'Tarefa criada' : 'Tarefa ja vinculada', {
+        description: result.task.title,
+      })
+    } catch (err) {
+      toast.error('Falha ao transformar nota', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    }
   }
 
   const handleNewNote = () => {
@@ -234,9 +239,9 @@ export default function NotesPage() {
               memory={memory}
               isLoading={memoryLoading}
               onOpen={(id) => setSelectedNoteId(id)}
-              onTransformToTask={(id) => {
+              onTransformToTask={async (id) => {
                 const target = activeNotes.find((n) => n.id === id) ?? memory?.note
-                if (target) handleTransformToTask(target)
+                if (target) await handleTransformToTask(target)
               }}
               onTogglePin={(id) => handleTogglePin(id)}
             />
@@ -273,7 +278,9 @@ export default function NotesPage() {
             onRestore={async () => {
               if (selectedNote) await handleRestore(selectedNote.id)
             }}
-            onTransformToTask={() => selectedNote && handleTransformToTask(selectedNote)}
+            onTransformToTask={async () => {
+              if (selectedNote) await handleTransformToTask(selectedNote)
+            }}
             onEdit={() => toast.info('Edição inline em breve.')}
             onCopyContent={() => selectedNote && handleCopyContent(selectedNote)}
             onTagClick={(tag) => setActiveFilter({ kind: 'tag', tag })}

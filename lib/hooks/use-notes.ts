@@ -5,6 +5,7 @@ import { notesRepo } from '@/lib/repositories/notes.repository'
 import {
   archiveNote,
   createStrategicNote,
+  createTaskFromNote,
   getNoteDetails,
   getNotesLibrary,
   getNotesStats,
@@ -67,6 +68,7 @@ export function useNotes(filters?: NoteFilters) {
       restore: restoreNote,
       togglePinned,
       toggleFavorite,
+      createTaskFromNote,
     }),
     []
   )

@@ -2,8 +2,7 @@
 
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
-import { ArrowRight, CheckSquare, Pin, Sparkles } from 'lucide-react'
-import { toast } from 'sonner'
+import { ArrowRight, CheckCircle2, CheckSquare, Pin, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,7 +18,7 @@ interface Props {
   memory: StrategicMemoryPick | null
   isLoading: boolean
   onOpen: (noteId: string) => void
-  onTransformToTask: (noteId: string) => void
+  onTransformToTask: (noteId: string) => Promise<void> | void
   onTogglePin: (noteId: string) => void
 }
 
@@ -140,13 +139,10 @@ export function StrategicMemoryPanel({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              onTransformToTask(note.id)
-              toast.info('Conversão para tarefa em breve.')
-            }}
-            aria-label="Virar tarefa"
+            onClick={() => onTransformToTask(note.id)}
+            aria-label={note.relatedTaskId ? 'Tarefa vinculada' : 'Virar tarefa'}
           >
-            <CheckSquare aria-hidden />
+            {note.relatedTaskId ? <CheckCircle2 aria-hidden /> : <CheckSquare aria-hidden />}
           </Button>
           <Button
             variant="ghost"

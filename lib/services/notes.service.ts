@@ -1,6 +1,11 @@
 import { noteFoldersRepo } from '@/lib/repositories/note-folders.repository'
 import { notesRepo } from '@/lib/repositories/notes.repository'
-import type { Note, NoteFolder, NoteInput, TaskCategory, TaskImportance } from '@/lib/types'
+import { tasksRepo } from '@/lib/repositories/tasks.repository'
+import {
+  createTask,
+  transformNoteToTaskPayload as buildTaskPayloadFromNote,
+} from '@/lib/services/tasks.service'
+import type { Note, NoteFolder, NoteInput, Task, TaskInput } from '@/lib/types'
 import {
   filterNotes,
   getMostUsedTags,
@@ -36,31 +41,10 @@ export interface NotesDashboardData {
   recent: Note[]
 }
 
-export interface TaskPayloadFromNote {
-  title: string
-  description: string
-  importance: TaskImportance
-  status: 'pending'
-  category: TaskCategory
-  relatedLeadId?: string
-  relatedNoteId: string
-  tagIds: string[]
-}
-
-function toTaskImportance(note: Note): TaskImportance {
-  if (note.priority === 'high' || note.impact === 'high') return 'high'
-  if (note.priority === 'low' && note.impact === 'low') return 'low'
-  return 'medium'
-}
-
-function toTaskCategory(note: Note): TaskCategory {
-  if (note.type === 'sales' || note.tags.includes('vendas')) return 'prospecting'
-  if (note.type === 'meeting') return 'meeting'
-  if (['product', 'feature', 'brandkit', 'onboarding'].includes(note.type)) return 'product'
-  if (note.type === 'ui') return 'design'
-  if (note.type === 'campaign') return 'meta-ads'
-  if (note.type === 'strategy' || note.type === 'decision') return 'strategy'
-  return 'other'
+export interface NoteTaskConversion {
+  note: Note
+  task: Task
+  created: boolean
 }
 
 function activeNotes(notes: Note[], filters?: NoteFilters): Note[] {
@@ -181,18 +165,34 @@ export async function getFolderStats(): Promise<
   })
 }
 
-export async function transformNoteToTaskPayload(noteId: string): Promise<TaskPayloadFromNote> {
+export async function transformNoteToTaskPayload(noteId: string): Promise<TaskInput> {
   const note = await notesRepo.getNoteById(noteId)
   if (!note) throw new Error(`Note ${noteId} not found`)
 
-  return {
-    title: `Transformar nota em acao: ${note.title}`,
-    description: [note.excerpt ?? note.content, `Fonte: ${note.source ?? 'manual'}`].join('\n\n'),
-    importance: toTaskImportance(note),
-    status: 'pending',
-    category: toTaskCategory(note),
-    relatedLeadId: note.relatedLeadId ?? undefined,
-    relatedNoteId: note.id,
-    tagIds: note.tags,
+  return buildTaskPayloadFromNote(note)
+}
+
+export async function createTaskFromNote(noteId: string): Promise<NoteTaskConversion> {
+  const note = await notesRepo.getNoteById(noteId)
+  if (!note) throw new Error(`Note ${noteId} not found`)
+
+  if (note.relatedTaskId) {
+    const existing = await tasksRepo.getById(note.relatedTaskId)
+    if (existing) {
+      return { note, task: existing, created: false }
+    }
   }
+
+  const [existingByNote] = await tasksRepo.list({ relatedNoteId: note.id })
+  if (existingByNote) {
+    const syncedNote = note.relatedTaskId === existingByNote.id
+      ? note
+      : await notesRepo.updateNote(note.id, { relatedTaskId: existingByNote.id })
+    return { note: syncedNote, task: existingByNote, created: false }
+  }
+
+  const task = await createTask(buildTaskPayloadFromNote(note))
+  const updatedNote = await notesRepo.updateNote(note.id, { relatedTaskId: task.id })
+
+  return { note: updatedNote, task, created: true }
 }
