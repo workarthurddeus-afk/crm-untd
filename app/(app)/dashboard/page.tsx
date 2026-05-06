@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useLeads } from '@/lib/hooks/use-leads'
 import { useTasks } from '@/lib/hooks/use-tasks'
 import { usePipelineStages } from '@/lib/hooks/use-pipeline-stages'
 import { useICPProfile } from '@/lib/hooks/use-icp-profile'
 import { useNotes } from '@/lib/hooks/use-notes'
+import { useNoteFolders } from '@/lib/hooks/use-note-folders'
 import { useBusinessMetricsSettings } from '@/lib/hooks/use-settings'
 import { generateAlerts } from '@/lib/services/alerts.service'
 import { deriveBusinessMetrics } from '@/lib/utils/business-math'
@@ -29,14 +30,32 @@ import { PipelineMovementCard } from '@/components/dashboard/pipeline-movement-c
 import { FounderRadar } from '@/components/dashboard/founder-radar'
 import { GrowthSignals } from '@/components/dashboard/growth-signals'
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton'
+import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
+import { TaskFormSheet } from '@/components/tasks/task-form-sheet'
+import { NoteEditorSheet } from '@/components/notes/note-editor-sheet'
+import type { NoteInput, TaskInput } from '@/lib/types'
 
 export default function DashboardPage() {
   const { leads, isLoading: leadsLoading } = useLeads()
-  const { tasks, isLoading: tasksLoading } = useTasks()
+  const {
+    tasks,
+    isLoading: tasksLoading,
+    createTask,
+    updateTask,
+    completeTask,
+    reopenTask,
+    cancelTask,
+    postponeTask,
+    scheduleTaskOnCalendar,
+  } = useTasks()
   const { stages, isLoading: stagesLoading } = usePipelineStages()
   const { profile, isLoading: profileLoading } = useICPProfile()
-  const { notes, isLoading: notesLoading } = useNotes()
+  const { notes, isLoading: notesLoading, actions: noteActions } = useNotes()
+  const { folders } = useNoteFolders()
   const { metrics: settingsMetrics, isLoading: settingsLoading } = useBusinessMetricsSettings()
+  const [leadDialogOpen, setLeadDialogOpen] = useState(false)
+  const [taskSheetOpen, setTaskSheetOpen] = useState(false)
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
   const reduced = useReducedMotion()
 
   const today = useMemo(() => new Date(), [])
@@ -59,33 +78,75 @@ export default function DashboardPage() {
   if (isLoading) return <DashboardSkeleton />
 
   return (
-    <motion.div
-      initial={reduced ? false : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: tokens.duration.slow / 1000, ease: tokens.easing.enter }}
-      className="mx-auto max-w-[1400px] px-8 py-6 space-y-6"
-    >
-      <DashboardHeader today={today} />
+    <>
+      <motion.div
+        initial={reduced ? false : { opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: tokens.duration.slow / 1000, ease: tokens.easing.enter }}
+        className="mx-auto max-w-[1400px] px-8 py-6 space-y-6"
+      >
+        <DashboardHeader
+          today={today}
+          onCreateLead={() => setLeadDialogOpen(true)}
+          onCreateTask={() => setTaskSheetOpen(true)}
+          onCreateNote={() => setNoteEditorOpen(true)}
+        />
 
-      <TopMetricsRow metrics={businessMetrics} leads={leads} tasks={tasks} alerts={alerts} today={today} />
+        <TopMetricsRow metrics={businessMetrics} leads={leads} tasks={tasks} alerts={alerts} today={today} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
-        <OperationPulseCard activity={operationActivitySeed} />
-        <div className="space-y-6">
-          <PriorityOfDayCard tasks={tasks} today={today} />
-          {memory && <StrategicMemoryCard pick={memory} />}
-          <BusinessHealthCard metrics={businessMetrics} derived={derived} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
+          <OperationPulseCard activity={operationActivitySeed} />
+          <div className="space-y-6">
+            <PriorityOfDayCard tasks={tasks} today={today} />
+            {memory && <StrategicMemoryCard pick={memory} />}
+            <BusinessHealthCard metrics={businessMetrics} derived={derived} />
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
-        <ActionCenter alerts={alerts} />
-        {pipelineSummary && <PipelineMovementCard summary={pipelineSummary} />}
-      </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
+          <ActionCenter alerts={alerts} />
+          {pipelineSummary && <PipelineMovementCard summary={pipelineSummary} />}
+        </div>
 
-      <FounderRadar insights={insights} opportunity={opportunity} />
+        <FounderRadar insights={insights} opportunity={opportunity} />
 
-      <GrowthSignals social={socialMediaMock} ads={metaAdsMock} />
-    </motion.div>
+        <GrowthSignals social={socialMediaMock} ads={metaAdsMock} />
+      </motion.div>
+
+      <LeadFormDialog open={leadDialogOpen} onClose={() => setLeadDialogOpen(false)} />
+
+      <TaskFormSheet
+        open={taskSheetOpen}
+        task={null}
+        leads={leads}
+        notes={notes}
+        onOpenChange={setTaskSheetOpen}
+        onCreate={(input: TaskInput) => createTask(input)}
+        onUpdate={(id: string, input: Partial<TaskInput>) => updateTask(id, input)}
+        onComplete={completeTask}
+        onReopen={reopenTask}
+        onCancelTask={cancelTask}
+        onPostpone={postponeTask}
+        onScheduleOnCalendar={scheduleTaskOnCalendar}
+      />
+
+      <NoteEditorSheet
+        open={noteEditorOpen}
+        note={null}
+        folders={folders}
+        onOpenChange={setNoteEditorOpen}
+        onCreate={(input: NoteInput) => noteActions.create(input)}
+        onUpdate={(id: string, input: Partial<NoteInput>) => noteActions.update(id, input)}
+        onArchive={async (id: string) => {
+          await noteActions.archive(id)
+        }}
+        onRestore={async (id: string) => {
+          await noteActions.restore(id)
+        }}
+        onTransformToTask={async (id: string) => {
+          await noteActions.createTaskFromNote(id)
+        }}
+      />
+    </>
   )
 }

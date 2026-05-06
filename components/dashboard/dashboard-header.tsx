@@ -3,14 +3,18 @@ import { useMemo } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { Search, Plus, ListChecks, NotebookPen } from 'lucide-react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { greetingFor } from '@/lib/utils/greeting'
 
-interface Props { today: Date }
+interface Props {
+  today: Date
+  onCreateLead: () => void
+  onCreateTask: () => void
+  onCreateNote: () => void
+}
 
-export function DashboardHeader({ today }: Props) {
+export function DashboardHeader({ today, onCreateLead, onCreateTask, onCreateNote }: Props) {
   const greeting = useMemo(() => greetingFor(today), [today])
   const dateLabel = useMemo(
     () => format(today, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
@@ -38,13 +42,13 @@ export function DashboardHeader({ today }: Props) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" strokeWidth={1.75} aria-hidden />
           <Input placeholder="Buscar lead, tarefa, nota..." className="pl-9 h-9 text-sm" />
         </div>
-        <Button variant="secondary" size="sm" onClick={() => toast.info('Novo lead em breve.')}>
+        <Button variant="secondary" size="sm" onClick={onCreateLead}>
           <Plus aria-hidden /> Lead
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => toast.info('Nova tarefa em breve.')}>
+        <Button variant="secondary" size="sm" onClick={onCreateTask}>
           <ListChecks aria-hidden /> Tarefa
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => toast.info('Nova nota em breve.')}>
+        <Button variant="secondary" size="sm" onClick={onCreateNote}>
           <NotebookPen aria-hidden /> Nota
         </Button>
       </div>
