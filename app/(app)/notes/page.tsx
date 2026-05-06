@@ -15,8 +15,9 @@ import { NotesPageHeader } from '@/components/notes/notes-page-header'
 import { NotesSidebar, type NotesActiveFilter } from '@/components/notes/notes-sidebar'
 import { NotesList } from '@/components/notes/notes-list'
 import { NoteDetail } from '@/components/notes/note-detail'
+import { NoteEditorSheet } from '@/components/notes/note-editor-sheet'
 import { StrategicMemoryPanel } from '@/components/notes/strategic-memory-panel'
-import type { Note } from '@/lib/types'
+import type { Note, NoteInput } from '@/lib/types'
 
 const ARCHIVED_FETCH_FILTER: NoteFilters = { isArchived: true }
 const FORGOTTEN_DAYS = 30
@@ -55,6 +56,8 @@ export default function NotesPage() {
   const [activeFilter, setActiveFilter] = useState<NotesActiveFilter>({ kind: 'all' })
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [sort, setSort] = useState<NoteSort>('strategic')
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
 
   // Two stable hook calls — one for active library, one for archived.
   const { notes: activeNotes, isLoading: activeLoading, actions } = useNotes()
@@ -115,6 +118,12 @@ export default function NotesPage() {
     if (!selectedNote?.folderId) return null
     return folders.find((f) => f.id === selectedNote.folderId) ?? null
   }, [folders, selectedNote])
+
+  const editorNote = useMemo(() => {
+    if (!editingNoteId) return null
+    if (selectedNote?.id === editingNoteId) return selectedNote
+    return [...activeNotes, ...archivedNotes].find((note) => note.id === editingNoteId) ?? null
+  }, [activeNotes, archivedNotes, editingNoteId, selectedNote])
 
   const filterChip = useMemo(() => {
     if (activeFilter.kind === 'tag')
@@ -205,9 +214,27 @@ export default function NotesPage() {
   }
 
   const handleNewNote = () => {
-    toast.info('Editor de nota em breve.', {
-      description: 'A criação completa de notas com BrandKit chega na próxima fase.',
-    })
+    setEditingNoteId(null)
+    setEditorOpen(true)
+  }
+
+  const handleEditNote = (note: Note) => {
+    setEditingNoteId(note.id)
+    setEditorOpen(true)
+  }
+
+  const handleCreateNote = async (input: NoteInput) => {
+    const created = await actions.create(input)
+    setSelectedNoteId(created.id)
+    setActiveFilter(created.isArchived ? { kind: 'archived' } : { kind: 'all' })
+    return created
+  }
+
+  const handleUpdateNote = async (id: string, input: Partial<NoteInput>) => {
+    const updated = await actions.update(id, input)
+    setSelectedNoteId(updated.id)
+    if (updated.isArchived) setActiveFilter({ kind: 'archived' })
+    return updated
   }
 
   return (
@@ -281,13 +308,38 @@ export default function NotesPage() {
             onTransformToTask={async () => {
               if (selectedNote) await handleTransformToTask(selectedNote)
             }}
-            onEdit={() => toast.info('Edição inline em breve.')}
+            onEdit={() => selectedNote && handleEditNote(selectedNote)}
             onCopyContent={() => selectedNote && handleCopyContent(selectedNote)}
             onTagClick={(tag) => setActiveFilter({ kind: 'tag', tag })}
             onClearSelection={() => setSelectedNoteId(null)}
           />
         </div>
       </div>
+
+      <NoteEditorSheet
+        open={editorOpen}
+        note={editorNote}
+        folders={folders}
+        onOpenChange={(open) => {
+          setEditorOpen(open)
+          if (!open) setEditingNoteId(null)
+        }}
+        onCreate={handleCreateNote}
+        onUpdate={handleUpdateNote}
+        onArchive={async (id) => {
+          await handleArchive(id)
+        }}
+        onRestore={async (id) => {
+          await handleRestore(id)
+        }}
+        onTransformToTask={async (id) => {
+          const target = selectedNote?.id === id
+            ? selectedNote
+            : [...activeNotes, ...archivedNotes].find((note) => note.id === id)
+          if (target) await handleTransformToTask(target)
+        }}
+        onSaved={(note) => setSelectedNoteId(note.id)}
+      />
     </div>
   )
 }

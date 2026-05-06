@@ -37,6 +37,7 @@ import {
   noteStatusLabel,
 } from '@/lib/utils/note-display'
 import { NoteColorDot } from './note-color-dot'
+import { NoteMarkdownPreview } from './note-markdown-preview'
 import { NoteMetadataPanel } from './note-metadata-panel'
 import { NoteEmptyState } from './empty-states'
 import type { Note, NoteFolder } from '@/lib/types'
@@ -301,14 +302,7 @@ export function NoteDetail({
       <ScrollArea className="relative min-h-0 flex-1">
         <div className="grid gap-8 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-10">
           <div className="min-w-0">
-            <div
-              className={cn(
-                'whitespace-pre-wrap break-words font-sans text-[15px] leading-[1.75] text-text-secondary',
-                'max-w-prose'
-              )}
-            >
-              {note.content}
-            </div>
+            <NoteMarkdownPreview content={note.content} className="max-w-prose" />
 
             {note.tags.length > 0 && (
               <div className="mt-8">

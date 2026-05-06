@@ -13,6 +13,7 @@ import {
   getStrategicMemory,
   getTagCloud,
   transformNoteToTaskPayload,
+  updateStrategicNote,
 } from '../notes.service'
 
 const today = new Date('2026-05-05T12:00:00.000Z')
@@ -84,6 +85,53 @@ describe('notes.service', () => {
     expect(dashboard.strategicMemory).not.toBeNull()
     expect(dashboard.highImpact.every((note) => !note.isArchived)).toBe(true)
     expect(dashboard.recent.every((note) => !note.isArchived)).toBe(true)
+  })
+
+  it('createStrategicNote and updateStrategicNote persist editor fields', async () => {
+    const created = await createStrategicNote({
+      title: 'Nova memoria de pricing',
+      content: '## Oferta\n\nTestar pacote de entrada para social medias.',
+      type: 'pricing',
+      status: 'draft',
+      priority: 'medium',
+      impact: 'high',
+      effort: 'low',
+      color: 'violet',
+      folderId: 'folder-strategy',
+      tags: ['Pricing', 'Oferta'],
+      isPinned: true,
+      isFavorite: false,
+      source: 'manual',
+    })
+
+    const updated = await updateStrategicNote(created.id, {
+      title: 'Memoria de pricing refinada',
+      content: '## Oferta\n\n==Pacote inicial== para validar os 10 primeiros clientes.',
+      status: 'active',
+      priority: 'high',
+      color: 'purple',
+      tags: ['pricing', 'primeiros-clientes'],
+      isFavorite: true,
+    })
+
+    expect(created).toMatchObject({
+      folderId: 'folder-strategy',
+      isPinned: true,
+      tags: ['pricing', 'oferta'],
+    })
+    expect(updated).toMatchObject({
+      title: 'Memoria de pricing refinada',
+      status: 'active',
+      priority: 'high',
+      color: 'purple',
+      tags: ['pricing', 'primeiros-clientes'],
+      isPinned: true,
+      isFavorite: true,
+    })
+    await expect(notesRepo.getNoteById(created.id)).resolves.toMatchObject({
+      title: 'Memoria de pricing refinada',
+      excerpt: expect.stringContaining('Pacote inicial'),
+    })
   })
 
   it('getActionableNotes and transformNoteToTaskPayload prepare task creation', async () => {
