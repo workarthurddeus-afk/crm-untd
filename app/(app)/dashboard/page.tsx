@@ -7,9 +7,10 @@ import { useTasks } from '@/lib/hooks/use-tasks'
 import { usePipelineStages } from '@/lib/hooks/use-pipeline-stages'
 import { useICPProfile } from '@/lib/hooks/use-icp-profile'
 import { useNotes } from '@/lib/hooks/use-notes'
+import { useBusinessMetricsSettings } from '@/lib/hooks/use-settings'
 import { generateAlerts } from '@/lib/services/alerts.service'
-import { businessMetricsMock } from '@/lib/mocks/business-metrics'
 import { deriveBusinessMetrics } from '@/lib/utils/business-math'
+import { getDashboardBusinessMetrics } from '@/lib/utils/dashboard-metrics'
 import { operationActivitySeed } from '@/lib/mocks/operation-activity'
 import { socialMediaMock, metaAdsMock } from '@/lib/mocks/growth-signals'
 import { getStrategicMemory } from '@/lib/utils/strategic-memory'
@@ -35,16 +36,18 @@ export default function DashboardPage() {
   const { stages, isLoading: stagesLoading } = usePipelineStages()
   const { profile, isLoading: profileLoading } = useICPProfile()
   const { notes, isLoading: notesLoading } = useNotes()
+  const { metrics: settingsMetrics, isLoading: settingsLoading } = useBusinessMetricsSettings()
   const reduced = useReducedMotion()
 
   const today = useMemo(() => new Date(), [])
-  const isLoading = leadsLoading || tasksLoading || stagesLoading || profileLoading || notesLoading
+  const isLoading = leadsLoading || tasksLoading || stagesLoading || profileLoading || notesLoading || settingsLoading
 
   const alerts = useMemo(
     () => isLoading ? [] : generateAlerts({ leads, tasks, feedbacks: [], pipeline: stages, today }),
     [isLoading, leads, tasks, stages, today]
   )
-  const derived = useMemo(() => deriveBusinessMetrics(businessMetricsMock), [])
+  const businessMetrics = useMemo(() => getDashboardBusinessMetrics(settingsMetrics), [settingsMetrics])
+  const derived = useMemo(() => deriveBusinessMetrics(businessMetrics), [businessMetrics])
   const memory = useMemo(() => isLoading ? null : getStrategicMemory(notes, today), [isLoading, notes, today])
   const pipelineSummary = useMemo(() => isLoading ? null : getPipelineSummary(leads, stages), [isLoading, leads, stages])
   const opportunity = useMemo(() => isLoading ? null : getBestOpportunity(leads), [isLoading, leads])
@@ -64,14 +67,14 @@ export default function DashboardPage() {
     >
       <DashboardHeader today={today} />
 
-      <TopMetricsRow metrics={businessMetricsMock} leads={leads} tasks={tasks} alerts={alerts} today={today} />
+      <TopMetricsRow metrics={businessMetrics} leads={leads} tasks={tasks} alerts={alerts} today={today} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
         <OperationPulseCard activity={operationActivitySeed} />
         <div className="space-y-6">
           <PriorityOfDayCard tasks={tasks} today={today} />
           {memory && <StrategicMemoryCard pick={memory} />}
-          <BusinessHealthCard metrics={businessMetricsMock} derived={derived} />
+          <BusinessHealthCard metrics={businessMetrics} derived={derived} />
         </div>
       </div>
 
