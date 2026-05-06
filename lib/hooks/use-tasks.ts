@@ -8,6 +8,7 @@ import {
   createTask as createTaskAction,
   postponeTask as postponeTaskAction,
   reopenTask as reopenTaskAction,
+  scheduleTaskOnCalendar as scheduleTaskOnCalendarAction,
   uncompleteTask as uncompleteTaskAction,
   updateTask as updateTaskAction,
 } from '@/lib/services/tasks.service'
@@ -92,6 +93,9 @@ export function useTaskActions() {
   const postponeTask = useCallback((id: string, newDueDate: string) => {
     return postponeTaskAction(id, newDueDate)
   }, [])
+  const scheduleTaskOnCalendar = useCallback((id: string) => {
+    return scheduleTaskOnCalendarAction(id)
+  }, [])
 
   return {
     createTask,
@@ -101,5 +105,6 @@ export function useTaskActions() {
     uncompleteTask,
     cancelTask,
     postponeTask,
+    scheduleTaskOnCalendar,
   }
 }

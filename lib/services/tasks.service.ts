@@ -1,5 +1,10 @@
 import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import { taskInputSchema, taskUpdateSchema } from '@/lib/schemas/task'
+import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repository'
+import {
+  createCalendarEvent,
+  transformTaskToCalendarEventPayload,
+} from '@/lib/services/calendar.service'
 import { nowIso } from '@/lib/utils/date'
 import type {
   CalendarEvent,
@@ -33,6 +38,12 @@ export interface TaskStats extends DashboardTasksSummary {
   inProgress: number
   done: number
   byCategory: Record<TaskCategory, number>
+}
+
+export interface ScheduledTaskCalendarEvent {
+  task: Task
+  event: CalendarEvent
+  created: boolean
 }
 
 export function isOpenTask(task: Task): boolean {
@@ -174,6 +185,33 @@ export async function cancelTask(id: string, cancelledAt = nowIso()): Promise<Ta
 
 export async function postponeTask(id: string, newDueDate: string): Promise<Task> {
   return tasksRepo.update(id, { dueDate: newDueDate })
+}
+
+export async function scheduleTaskOnCalendar(taskId: string): Promise<ScheduledTaskCalendarEvent> {
+  const task = await tasksRepo.getById(taskId)
+  if (!task) throw new Error(`Task ${taskId} not found`)
+
+  if (task.relatedCalendarEventId) {
+    const existing = await calendarEventsRepo.getEventById(task.relatedCalendarEventId)
+    if (existing) {
+      return { task, event: existing, created: false }
+    }
+  }
+
+  const [existingByTask] = await calendarEventsRepo.getEventsByTaskId(task.id)
+  if (existingByTask) {
+    const syncedTask = task.relatedCalendarEventId === existingByTask.id
+      ? task
+      : await tasksRepo.update(task.id, { relatedCalendarEventId: existingByTask.id })
+    return { task: syncedTask, event: existingByTask, created: false }
+  }
+
+  const event = await createCalendarEvent(transformTaskToCalendarEventPayload(task))
+  const updatedTask = await tasksRepo.update(task.id, {
+    relatedCalendarEventId: event.id,
+  })
+
+  return { task: updatedTask, event, created: true }
 }
 
 export async function getTodayTasks(date = new Date()): Promise<Task[]> {

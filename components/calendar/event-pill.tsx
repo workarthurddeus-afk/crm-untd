@@ -6,7 +6,7 @@ import {
   getCalendarColorTokens,
   isOverdueEvent,
 } from '@/lib/utils/calendar-display'
-import { Bell, Check, Flame } from 'lucide-react'
+import { Bell, Check, Flame, ListChecks } from 'lucide-react'
 import type { CalendarEvent } from '@/lib/types'
 
 interface Props {
@@ -62,6 +62,9 @@ export function EventPill({ event, selected = false, onSelect, today }: Props) {
       <span className="ml-1 flex min-w-0 flex-1 items-center gap-1">
         {event.isReminder && !completed && (
           <Bell className="h-2.5 w-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+        )}
+        {event.relatedTaskId && (
+          <ListChecks className="h-2.5 w-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
         )}
         {time && (
           <span className="font-mono text-[9px] tabular-nums opacity-80 shrink-0">{time}</span>

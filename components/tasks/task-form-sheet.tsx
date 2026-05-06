@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react'
 import {
   CalendarClock,
+  CalendarCheck2,
+  CalendarPlus,
   CheckCircle2,
   Clipboard,
   Flag,
@@ -62,9 +64,18 @@ interface Props {
   onReopen: (id: string) => Promise<Task>
   onCancelTask: (id: string) => Promise<Task>
   onPostpone: (id: string, dueDate: string) => Promise<Task>
+  onScheduleOnCalendar: (id: string) => Promise<{ task: Task; created: boolean }>
 }
 
-type BusyAction = 'save' | 'complete' | 'reopen' | 'cancel' | 'postpone' | 'copy' | null
+type BusyAction =
+  | 'save'
+  | 'complete'
+  | 'reopen'
+  | 'cancel'
+  | 'postpone'
+  | 'schedule'
+  | 'copy'
+  | null
 
 interface FieldProps {
   label: string
@@ -125,6 +136,7 @@ export function TaskFormSheet({
   onReopen,
   onCancelTask,
   onPostpone,
+  onScheduleOnCalendar,
 }: Props) {
   const [form, setForm] = useState<TaskFormState>(() => getDefaultTaskFormState())
   const [titleError, setTitleError] = useState<string | undefined>()
@@ -233,6 +245,24 @@ export function TaskFormSheet({
     }
   }
 
+  async function handleScheduleOnCalendar() {
+    if (!task) return
+    setBusyAction('schedule')
+    try {
+      const result = await onScheduleOnCalendar(task.id)
+      setForm(taskToFormState(result.task))
+      toast.success(result.created ? 'Tarefa agendada' : 'Tarefa ja estava agendada', {
+        description: result.task.title,
+      })
+    } catch (err) {
+      toast.error('Nao foi possivel agendar', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[560px] max-w-[96vw]">
@@ -279,7 +309,7 @@ export function TaskFormSheet({
           <SheetBody className="space-y-6">
             {isEdit && (
               <section className="rounded-xl border border-border-subtle bg-surface/45 p-3">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
                   {form.status === 'done' || form.status === 'cancelled' ? (
                     <Button
                       type="button"
@@ -315,6 +345,28 @@ export function TaskFormSheet({
                   </Button>
                   <Button
                     type="button"
+                    variant={task?.relatedCalendarEventId ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={() => void handleScheduleOnCalendar()}
+                    disabled={isBusy || Boolean(task?.relatedCalendarEventId)}
+                    className="justify-start"
+                  >
+                    {task?.relatedCalendarEventId ? (
+                      <>
+                        <CalendarCheck2 aria-hidden /> Agendada
+                      </>
+                    ) : busyAction === 'schedule' ? (
+                      <>
+                        <Loader2 className="animate-spin" aria-hidden /> Agendando
+                      </>
+                    ) : (
+                      <>
+                        <CalendarPlus aria-hidden /> Agendar
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
                     variant="destructive"
                     size="sm"
                     onClick={() => void runQuickAction('cancel')}
@@ -329,7 +381,7 @@ export function TaskFormSheet({
                     size="sm"
                     onClick={() => void handleCopy()}
                     disabled={isBusy || (!form.title.trim() && !form.description.trim())}
-                    className="justify-start sm:col-span-2"
+                    className="justify-start"
                   >
                     <Clipboard aria-hidden /> Copiar contexto
                   </Button>

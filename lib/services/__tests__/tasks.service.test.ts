@@ -11,6 +11,7 @@ import {
   getTodayTasks,
   getUpcomingTasks,
   reopenTask,
+  scheduleTaskOnCalendar,
   postponeTask,
   tasksDueToday,
   tasksOverdue,
@@ -19,6 +20,7 @@ import {
   transformLeadToFollowUpTaskPayload,
   transformNoteToTaskPayload,
 } from '../tasks.service'
+import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repository'
 import { tasksSeed } from '@/lib/mocks/seeds/tasks.seed'
 import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import type { CalendarEvent, Lead, Note, Task } from '@/lib/types'
@@ -157,6 +159,48 @@ describe('task service actions', () => {
     expect(created.source).toBe('note')
     expect(await tasksRepo.getById(created.id)).toMatchObject({
       title: 'Transformar insight em follow-up',
+    })
+  })
+
+  it('scheduleTaskOnCalendar creates a linked calendar event and stores the event id on the task', async () => {
+    const task = await createTask({
+      title: 'Bloquear foco para revisar proposta',
+      description: 'Transformar a pendencia em compromisso no calendario.',
+      dueDate: '2026-05-09T13:00:00.000Z',
+      importance: 'high',
+      status: 'pending',
+      category: 'strategy',
+      tagIds: ['agenda', 'proposta'],
+    })
+
+    const result = await scheduleTaskOnCalendar(task.id)
+
+    expect(result.created).toBe(true)
+    expect(result.event).toMatchObject({
+      title: 'Bloquear foco para revisar proposta',
+      relatedTaskId: task.id,
+      source: 'task',
+    })
+    expect(result.task.relatedCalendarEventId).toBe(result.event.id)
+    await expect(calendarEventsRepo.getEventById(result.event.id)).resolves.toMatchObject({
+      relatedTaskId: task.id,
+    })
+    await expect(tasksRepo.getById(task.id)).resolves.toMatchObject({
+      relatedCalendarEventId: result.event.id,
+    })
+  })
+
+  it('scheduleTaskOnCalendar reuses the existing linked event instead of duplicating', async () => {
+    const first = await scheduleTaskOnCalendar('task-004')
+    const second = await scheduleTaskOnCalendar('task-004')
+    const linkedEvents = await calendarEventsRepo.getEventsByTaskId('task-004')
+
+    expect(first.created).toBe(false)
+    expect(second.created).toBe(false)
+    expect(second.event.id).toBe(first.event.id)
+    expect(linkedEvents).toHaveLength(1)
+    await expect(tasksRepo.getById('task-004')).resolves.toMatchObject({
+      relatedCalendarEventId: first.event.id,
     })
   })
 })

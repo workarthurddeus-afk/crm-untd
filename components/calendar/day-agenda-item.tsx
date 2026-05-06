@@ -188,7 +188,7 @@ export function DayAgendaItem({
             {event.relatedTaskId && (
               <span className="inline-flex items-center gap-1 text-[10px] text-text-muted">
                 <ListChecks className="h-2.5 w-2.5" strokeWidth={1.75} aria-hidden />
-                tarefa
+                Tarefa vinculada
               </span>
             )}
             {event.relatedNoteId && (

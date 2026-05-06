@@ -38,6 +38,7 @@ export default function TasksPage() {
     reopenTask,
     cancelTask,
     postponeTask,
+    scheduleTaskOnCalendar,
   } = useTasks()
   const { leads, isLoading: leadsLoading } = useLeads()
   const { notes } = useNotes()
@@ -295,6 +296,7 @@ export default function TasksPage() {
         onReopen={reopenTask}
         onCancelTask={cancelTask}
         onPostpone={postponeTask}
+        onScheduleOnCalendar={scheduleTaskOnCalendar}
       />
       <TasksFilterSheet
         open={filtersSheetOpen}
