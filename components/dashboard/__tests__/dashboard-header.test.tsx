@@ -42,6 +42,9 @@ describe('DashboardHeader', () => {
           onCreateLead={onCreateLead}
           onCreateTask={onCreateTask}
           onCreateNote={onCreateNote}
+          leads={[]}
+          tasks={[]}
+          notes={[]}
         />
       )
     })

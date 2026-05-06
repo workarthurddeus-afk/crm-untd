@@ -7,7 +7,7 @@ describe('tasksRepo', () => {
     window.localStorage.clear()
   })
 
-  it('seeds 12 realistic productivity tasks for phase 2', async () => {
+  it('seeds 12 realistic productivity tasks', async () => {
     const tasks = await tasksRepo.list()
 
     expect(tasks).toHaveLength(12)

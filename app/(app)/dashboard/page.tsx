@@ -90,6 +90,9 @@ export default function DashboardPage() {
           onCreateLead={() => setLeadDialogOpen(true)}
           onCreateTask={() => setTaskSheetOpen(true)}
           onCreateNote={() => setNoteEditorOpen(true)}
+          leads={leads}
+          tasks={tasks}
+          notes={notes}
         />
 
         <TopMetricsRow metrics={businessMetrics} leads={leads} tasks={tasks} alerts={alerts} today={today} />
@@ -98,7 +101,12 @@ export default function DashboardPage() {
           <OperationPulseCard activity={operationActivitySeed} />
           <div className="space-y-6">
             <PriorityOfDayCard tasks={tasks} today={today} />
-            {memory && <StrategicMemoryCard pick={memory} />}
+            {memory && (
+              <StrategicMemoryCard
+                pick={memory}
+                onTransformToTask={noteActions.createTaskFromNote}
+              />
+            )}
             <BusinessHealthCard metrics={businessMetrics} derived={derived} />
           </div>
         </div>

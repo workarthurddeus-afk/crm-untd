@@ -1,13 +1,11 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { Pencil } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useICPProfile } from '@/lib/hooks/use-icp-profile'
 import { useLeads } from '@/lib/hooks/use-leads'
 import { tokens } from '@/lib/theme/tokens'
+import { ICPPageActions } from '@/components/icp/icp-page-actions'
 import { ICPHero } from '@/components/icp/icp-hero'
 import { ICPScoreDistribution } from '@/components/icp/icp-score-distribution'
 import { CriteriaList } from '@/components/icp/criteria-list'
@@ -21,26 +19,12 @@ export default function ICPPage() {
 
   const isLoading = profileLoading || leadsLoading
 
-  const editAction = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={-1}>
-          <Button variant="secondary" size="md" disabled>
-            <Pencil aria-hidden />
-            Editar perfil
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>Edição chega na Phase 2.</TooltipContent>
-    </Tooltip>
-  )
-
   return (
     <div>
       <PageHeader
         title="ICP & Scoring"
         description="Quem é o seu cliente perfeito — em números."
-        actions={editAction}
+        actions={<ICPPageActions />}
       />
       {isLoading || !profile ? (
         <ICPPageSkeleton />

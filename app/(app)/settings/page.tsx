@@ -15,7 +15,6 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
-  Target,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -24,6 +23,7 @@ import {
   settingsToFormState,
   type SettingsFormState,
 } from '@/components/settings/settings-form-utils'
+import { settingsPersistenceCopy } from '@/components/settings/settings-page-config'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +41,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useSettings } from '@/lib/hooks/use-settings'
 import { cn } from '@/lib/utils/cn'
-import type { CalendarView, TaskCategory, TaskImportance } from '@/lib/types'
+import type { TaskCategory, TaskImportance } from '@/lib/types'
 import type { IntegrationSettings } from '@/lib/types/settings'
 
 type SettingsSection = 'general' | 'metrics' | 'crm' | 'tasks' | 'product' | 'integrations'
@@ -90,13 +90,6 @@ const taskCategoryOptions: Array<{ value: TaskCategory; label: string }> = [
   { value: 'study', label: 'Estudo' },
   { value: 'ops', label: 'Operacoes' },
   { value: 'other', label: 'Outro' },
-]
-
-const calendarViewOptions: Array<{ value: CalendarView; label: string }> = [
-  { value: 'day', label: 'Dia' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'agenda', label: 'Agenda' },
 ]
 
 interface FieldProps {
@@ -608,12 +601,6 @@ export default function SettingsPage() {
                 <Field label="Fim do dia" htmlFor="workday-end">
                   <Input id="workday-end" type="time" value={form.tasksCalendar.workdayEnd} onChange={(event) => updateSection('tasksCalendar', 'workdayEnd', event.target.value)} />
                 </Field>
-                <Field label="Visao padrao" htmlFor="calendar-view">
-                  <Select value={form.tasksCalendar.defaultCalendarView} onValueChange={(value) => updateSection('tasksCalendar', 'defaultCalendarView', value as CalendarView)}>
-                    <SelectTrigger id="calendar-view"><SelectValue /></SelectTrigger>
-                    <SelectContent>{calendarViewOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
               </div>
               <div className="rounded-xl border border-border-subtle bg-background/35 p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -699,7 +686,7 @@ export default function SettingsPage() {
 
       <div className="flex items-center gap-2 text-xs text-text-muted">
         <Check className="h-3.5 w-3.5 text-success" strokeWidth={1.75} aria-hidden />
-        Settings salvos localmente via mock repository e prontos para consumo futuro do Dashboard.
+        {settingsPersistenceCopy}
       </div>
     </div>
   )
