@@ -19,10 +19,20 @@ import {
   transformLeadToFollowUpTaskPayload,
   transformNoteToTaskPayload,
 } from '../tasks.service'
+import { tasksSeed } from '@/lib/mocks/seeds/tasks.seed'
 import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import type { CalendarEvent, Lead, Note, Task } from '@/lib/types'
 
 const today = new Date('2026-05-01T12:00:00.000Z')
+const seededToday = new Date(
+  tasksSeed.find((task) => task.id === 'task-002')?.dueDate ?? today,
+)
+
+function seededTodayAt(hour: number): string {
+  const date = new Date(seededToday)
+  date.setUTCHours(hour, 0, 0, 0)
+  return date.toISOString()
+}
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -153,29 +163,29 @@ describe('task service actions', () => {
 
 describe('task operational queries', () => {
   it('getTodayTasks returns only open tasks due today', async () => {
-    const tasks = await getTodayTasks(new Date('2026-05-05T12:00:00.000Z'))
+    const tasks = await getTodayTasks(seededToday)
 
     expect(tasks.map((task) => task.id)).toEqual(['task-002', 'task-003'])
     expect(tasks.every((task) => task.status !== 'done' && task.status !== 'cancelled')).toBe(true)
   })
 
   it('getOverdueTasks returns only open overdue tasks', async () => {
-    const tasks = await getOverdueTasks(new Date('2026-05-05T12:00:00.000Z'))
+    const tasks = await getOverdueTasks(seededToday)
 
     expect(tasks.map((task) => task.id)).toEqual(['task-001', 'task-009'])
   })
 
   it('getUpcomingTasks returns future open tasks within the requested window', async () => {
-    const tasks = await getUpcomingTasks(3, new Date('2026-05-05T12:00:00.000Z'))
+    const tasks = await getUpcomingTasks(3, seededToday)
 
     expect(tasks.map((task) => task.id)).toEqual(['task-004', 'task-005', 'task-006'])
     expect(tasks.every((task) => task.status !== 'done' && task.status !== 'cancelled')).toBe(true)
   })
 
   it('getDashboardTasksSummary calculates operational counters', async () => {
-    await completeTask('task-002', '2026-05-05T15:00:00.000Z')
+    await completeTask('task-002', seededTodayAt(15))
 
-    const summary = await getDashboardTasksSummary(new Date('2026-05-05T12:00:00.000Z'))
+    const summary = await getDashboardTasksSummary(seededToday)
 
     expect(summary.open).toBe(9)
     expect(summary.today).toBe(1)
