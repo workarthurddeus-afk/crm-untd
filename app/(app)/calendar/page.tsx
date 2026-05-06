@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { Construction } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCalendarEvents, useCalendarSummary } from '@/lib/hooks/use-calendar'
 import { filterEvents, sortEventsForAgenda } from '@/lib/utils/calendar'
@@ -28,7 +27,6 @@ import type {
   CalendarEvent,
   CalendarEventInput,
   CalendarFilters,
-  CalendarView,
 } from '@/lib/types'
 
 const STABLE_EMPTY_FILTERS: CalendarFilters | undefined = undefined
@@ -76,7 +74,6 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState<Date>(() => getStartOfMonth(today))
   const [selectedDay, setSelectedDay] = useState<Date>(() => today)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
-  const [view, setView] = useState<CalendarView>('month')
   const [filters, setFilters] = useState<CalendarFilterState>(DEFAULT_FILTERS)
   const [searchQuery, setSearchQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -249,8 +246,6 @@ export default function CalendarPage() {
     [actions]
   )
 
-  const showMonthGrid = view === 'month'
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <CalendarPageHeader
@@ -273,8 +268,6 @@ export default function CalendarPage() {
 
           <CalendarToolbar
             cursor={cursor}
-            view={view}
-            onViewChange={setView}
             onPrev={handlePrevMonth}
             onNext={handleNextMonth}
             onToday={handleJumpToToday}
@@ -283,20 +276,16 @@ export default function CalendarPage() {
           />
 
           <div className="min-h-0 flex-1 p-4 lg:p-6">
-            {showMonthGrid ? (
-              <MonthCalendarGrid
-                cursor={cursor}
-                today={today}
-                selectedDay={selectedDay}
-                events={filteredVisibleEvents}
-                onSelectDay={handleSelectDay}
-                selectedEventId={selectedEventId}
-                onSelectEvent={handleSelectEvent}
-                isLoading={isLoading && allEvents.length === 0}
-              />
-            ) : (
-              <ComingSoonView view={view} />
-            )}
+            <MonthCalendarGrid
+              cursor={cursor}
+              today={today}
+              selectedDay={selectedDay}
+              events={filteredVisibleEvents}
+              onSelectDay={handleSelectDay}
+              selectedEventId={selectedEventId}
+              onSelectEvent={handleSelectEvent}
+              isLoading={isLoading && allEvents.length === 0}
+            />
           </div>
         </main>
 
@@ -340,31 +329,6 @@ export default function CalendarPage() {
         asReminder={dialogAsReminder}
         onSubmit={handleCreateEvent}
       />
-    </div>
-  )
-}
-
-function ComingSoonView({ view }: { view: CalendarView }) {
-  const labelMap: Record<CalendarView, string> = {
-    month: 'Mês',
-    week: 'Semana',
-    day: 'Dia',
-    agenda: 'Agenda',
-  }
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="max-w-md rounded-xl border border-dashed border-border-subtle bg-gradient-to-b from-surface/30 to-transparent px-8 py-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Construction className="h-5 w-5" strokeWidth={1.5} aria-hidden />
-        </div>
-        <h3 className="mt-4 font-display text-lg font-semibold tracking-tight text-text">
-          Vista de {labelMap[view]} em breve
-        </h3>
-        <p className="mt-1.5 text-sm text-text-muted">
-          A V1 do calendário entrega a vista mensal completa. Use a agenda do dia ao lado para
-          ações rápidas, ou volte para a vista de mês.
-        </p>
-      </div>
     </div>
   )
 }

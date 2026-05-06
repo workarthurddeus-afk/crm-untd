@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, Filter, RotateCcw, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Filter, RotateCcw, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -26,7 +26,6 @@ import {
   type CalendarEventStatus,
   type CalendarEventType,
   type CalendarImportance,
-  type CalendarView,
 } from '@/lib/types'
 
 export interface CalendarFilterState {
@@ -47,21 +46,12 @@ export const DEFAULT_FILTERS: CalendarFilterState = {
 
 interface Props {
   cursor: Date
-  view: CalendarView
-  onViewChange: (view: CalendarView) => void
   onPrev: () => void
   onNext: () => void
   onToday: () => void
   filters: CalendarFilterState
   onFilterChange: (next: CalendarFilterState) => void
 }
-
-const VIEW_OPTIONS: Array<{ value: CalendarView; label: string }> = [
-  { value: 'month', label: 'Mês' },
-  { value: 'week', label: 'Semana' },
-  { value: 'day', label: 'Dia' },
-  { value: 'agenda', label: 'Agenda' },
-]
 
 function activeFilterCount(filters: CalendarFilterState): number {
   let n = 0
@@ -75,8 +65,6 @@ function activeFilterCount(filters: CalendarFilterState): number {
 
 export function CalendarToolbar({
   cursor,
-  view,
-  onViewChange,
   onPrev,
   onNext,
   onToday,
@@ -125,23 +113,9 @@ export function CalendarToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex overflow-hidden rounded-md border border-border bg-surface/60 p-0.5">
-          {VIEW_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onViewChange(option.value)}
-              aria-pressed={view === option.value}
-              className={cn(
-                'rounded px-2.5 py-1 text-xs font-medium transition-colors duration-fast',
-                view === option.value
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-text-muted hover:text-text'
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/20 bg-primary/10 px-3 text-xs font-medium text-primary">
+          <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          Visão mensal
         </div>
 
         <Popover>
