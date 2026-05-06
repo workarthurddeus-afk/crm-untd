@@ -7,9 +7,11 @@ import {
   Calendar,
   Flag,
   Link2,
+  SlidersHorizontal,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
+import { Button } from '@/components/ui/button'
 import { TasksGroupHeader } from './tasks-group-header'
 import { TaskRow } from './task-row'
 import { TasksCompletedGroup } from './tasks-completed-group'
@@ -28,8 +30,10 @@ interface Props {
   today: Date
   leadById: Map<string, Lead>
   pendingIds: Set<string>
+  hasAdvancedFilters?: boolean
   onToggle: (task: Task) => void
   onOpenTask: (task: Task) => void
+  onClearAdvancedFilters?: () => void
 }
 
 function filterTasks(allTasks: Task[], filterId: FilterId, today: Date): Task[] {
@@ -107,8 +111,10 @@ export function TasksList({
   today,
   leadById,
   pendingIds,
+  hasAdvancedFilters = false,
   onToggle,
   onOpenTask,
+  onClearAdvancedFilters,
 }: Props) {
   const filtered = useMemo(
     () => filterTasks(tasks, filter, today),
@@ -124,6 +130,24 @@ export function TasksList({
   const completedGroup = groups.find((g) => g.id === 'completed')
 
   if (filtered.length === 0 || (openGroups.length === 0 && !completedGroup)) {
+    if (hasAdvancedFilters) {
+      return (
+        <EmptyState
+          icon={SlidersHorizontal}
+          title="Nenhuma tarefa nesse recorte."
+          description="Ajuste os filtros para ampliar a lista operacional."
+          action={
+            onClearAdvancedFilters ? (
+              <Button variant="secondary" onClick={onClearAdvancedFilters}>
+                Limpar filtros
+              </Button>
+            ) : null
+          }
+          className="mt-8"
+        />
+      )
+    }
+
     const msg = filterEmptyMessages[filter]
     return (
       <EmptyState

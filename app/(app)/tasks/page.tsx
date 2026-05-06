@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
-import { Plus, ListChecks } from 'lucide-react'
+import { Filter, ListChecks, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useTasks } from '@/lib/hooks/use-tasks'
 import { useLeads } from '@/lib/hooks/use-leads'
@@ -14,6 +15,17 @@ import { TasksFilterChips, type FilterId } from '@/components/tasks/tasks-filter
 import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
 import { TaskFormSheet } from '@/components/tasks/task-form-sheet'
+import {
+  TaskActiveFilterChips,
+  TasksFilterSheet,
+  defaultTaskAdvancedFilters,
+  getActiveTaskFiltersCount,
+} from '@/components/tasks/tasks-filter-sheet'
+import {
+  filterTasksAdvanced,
+  removeTaskFilterById,
+  type TaskAdvancedFilters,
+} from '@/components/tasks/task-filter-utils'
 import type { Task, TaskInput, TaskStatus } from '@/lib/types'
 
 export default function TasksPage() {
@@ -34,6 +46,10 @@ export default function TasksPage() {
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
   const [taskSheetOpen, setTaskSheetOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
+  const [advancedFilters, setAdvancedFilters] = useState<TaskAdvancedFilters>(
+    defaultTaskAdvancedFilters,
+  )
 
   const today = useMemo(() => new Date(), [])
 
@@ -49,11 +65,16 @@ export default function TasksPage() {
     () => new Map(leads.map((l) => [l.id, l])),
     [leads],
   )
+  const advancedFilteredTasks = useMemo(
+    () => filterTasksAdvanced(effectiveTasks, advancedFilters, today),
+    [advancedFilters, effectiveTasks, today],
+  )
+  const activeFiltersCount = getActiveTaskFiltersCount(advancedFilters)
 
-  const openCount = effectiveTasks.filter(
+  const openCount = advancedFilteredTasks.filter(
     (t) => t.status !== 'done' && t.status !== 'cancelled',
   ).length
-  const overdueCount = tasksOverdue(effectiveTasks, today).length
+  const overdueCount = tasksOverdue(advancedFilteredTasks, today).length
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
     [tasks, selectedTaskId],
@@ -149,6 +170,14 @@ export default function TasksPage() {
     [updateTask],
   )
 
+  const resetAdvancedFilters = useCallback(() => {
+    setAdvancedFilters(defaultTaskAdvancedFilters)
+  }, [])
+
+  const removeAdvancedFilter = useCallback((id: string) => {
+    setAdvancedFilters((current) => removeTaskFilterById(current, id))
+  }, [])
+
   const isLoading = tasksLoading || leadsLoading
 
   return (
@@ -189,22 +218,66 @@ export default function TasksPage() {
       ) : (
         <>
           <div className="sticky top-0 z-10 bg-background">
+            <div className="flex flex-col gap-3 border-b border-border-subtle px-8 py-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="relative min-w-0 flex-1 xl:max-w-md">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <Input
+                  value={advancedFilters.query}
+                  onChange={(event) =>
+                    setAdvancedFilters((current) => ({
+                      ...current,
+                      query: event.target.value,
+                    }))
+                  }
+                  placeholder="Buscar tarefa, tag ou contexto..."
+                  aria-label="Buscar tarefas"
+                  className="h-9 pl-9"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => setFiltersSheetOpen(true)}
+                  className="relative"
+                >
+                  <Filter aria-hidden />
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-primary px-1.5 py-0.5 font-mono text-[10px] leading-none text-white">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" onClick={resetAdvancedFilters}>
+                    Limpar
+                  </Button>
+                )}
+              </div>
+            </div>
             <TasksFilterChips
-              tasks={effectiveTasks}
+              tasks={advancedFilteredTasks}
               active={filter}
               today={today}
               onChange={setFilter}
             />
+            <TaskActiveFilterChips
+              filters={advancedFilters}
+              onRemove={removeAdvancedFilter}
+              onReset={resetAdvancedFilters}
+            />
           </div>
           <div className="px-8 py-4 pb-12">
             <TasksList
-              tasks={effectiveTasks}
+              tasks={advancedFilteredTasks}
               filter={filter}
               today={today}
               leadById={leadById}
               pendingIds={pendingIds}
               onToggle={handleToggle}
               onOpenTask={openTask}
+              hasAdvancedFilters={activeFiltersCount > 0}
+              onClearAdvancedFilters={resetAdvancedFilters}
             />
           </div>
         </>
@@ -222,6 +295,15 @@ export default function TasksPage() {
         onReopen={reopenTask}
         onCancelTask={cancelTask}
         onPostpone={postponeTask}
+      />
+      <TasksFilterSheet
+        open={filtersSheetOpen}
+        filters={advancedFilters}
+        leads={leads}
+        notes={notes}
+        onOpenChange={setFiltersSheetOpen}
+        onChange={setAdvancedFilters}
+        onReset={resetAdvancedFilters}
       />
     </div>
   )
