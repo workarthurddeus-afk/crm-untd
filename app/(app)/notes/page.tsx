@@ -16,8 +16,9 @@ import { NotesSidebar, type NotesActiveFilter } from '@/components/notes/notes-s
 import { NotesList } from '@/components/notes/notes-list'
 import { NoteDetail } from '@/components/notes/note-detail'
 import { NoteEditorSheet } from '@/components/notes/note-editor-sheet'
+import { NoteFolderSheet } from '@/components/notes/note-folder-sheet'
 import { StrategicMemoryPanel } from '@/components/notes/strategic-memory-panel'
-import type { Note, NoteInput } from '@/lib/types'
+import type { Note, NoteFolderInput, NoteInput } from '@/lib/types'
 
 const ARCHIVED_FETCH_FILTER: NoteFilters = { isArchived: true }
 const FORGOTTEN_DAYS = 30
@@ -58,11 +59,12 @@ export default function NotesPage() {
   const [sort, setSort] = useState<NoteSort>('strategic')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [folderSheetOpen, setFolderSheetOpen] = useState(false)
 
   // Two stable hook calls — one for active library, one for archived.
   const { notes: activeNotes, isLoading: activeLoading, actions } = useNotes()
   const { notes: archivedNotes, isLoading: archivedLoading } = useNotes(ARCHIVED_FETCH_FILTER)
-  const { folders, isLoading: foldersLoading } = useNoteFolders()
+  const { folders, isLoading: foldersLoading, actions: folderActions } = useNoteFolders()
   const { stats } = useNotesStats()
   const { memory, isLoading: memoryLoading } = useStrategicMemory()
 
@@ -124,6 +126,11 @@ export default function NotesPage() {
     if (selectedNote?.id === editingNoteId) return selectedNote
     return [...activeNotes, ...archivedNotes].find((note) => note.id === editingNoteId) ?? null
   }, [activeNotes, archivedNotes, editingNoteId, selectedNote])
+
+  const nextFolderOrder = useMemo(
+    () => folders.reduce((max, folder) => Math.max(max, folder.order), -1) + 1,
+    [folders]
+  )
 
   const filterChip = useMemo(() => {
     if (activeFilter.kind === 'tag')
@@ -218,6 +225,10 @@ export default function NotesPage() {
     setEditorOpen(true)
   }
 
+  const handleNewFolder = () => {
+    setFolderSheetOpen(true)
+  }
+
   const handleEditNote = (note: Note) => {
     setEditingNoteId(note.id)
     setEditorOpen(true)
@@ -237,6 +248,12 @@ export default function NotesPage() {
     return updated
   }
 
+  const handleCreateFolder = async (input: NoteFolderInput) => {
+    const created = await folderActions.create(input)
+    setActiveFilter({ kind: 'folder', folderId: created.id })
+    return created
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <NotesPageHeader
@@ -250,7 +267,7 @@ export default function NotesPage() {
           archived: counts.archived,
         }}
         onNewNote={handleNewNote}
-        onNewFolder={() => undefined}
+        onNewFolder={handleNewFolder}
       />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -339,6 +356,13 @@ export default function NotesPage() {
           if (target) await handleTransformToTask(target)
         }}
         onSaved={(note) => setSelectedNoteId(note.id)}
+      />
+
+      <NoteFolderSheet
+        open={folderSheetOpen}
+        nextOrder={nextFolderOrder}
+        onOpenChange={setFolderSheetOpen}
+        onCreate={handleCreateFolder}
       />
     </div>
   )

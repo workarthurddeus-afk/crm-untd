@@ -28,7 +28,19 @@ export async function getNoteFolder(id: string): Promise<NoteFolder | null> {
 }
 
 export async function createNoteFolder(input: NoteFolderInput): Promise<NoteFolder> {
-  return noteFoldersRepo.createFolder(input)
+  const normalizedName = normalizeFolderName(input.name)
+  if (!normalizedName) throw new Error('Folder name is required')
+
+  const folders = await noteFoldersRepo.listAllFolders()
+  const duplicate = folders.find((folder) => normalizeFolderName(folder.name) === normalizedName)
+  if (duplicate) throw new Error(`Folder "${input.name.trim()}" already exists`)
+
+  const description = input.description?.trim()
+  return noteFoldersRepo.createFolder({
+    ...input,
+    name: input.name.trim(),
+    description: description || undefined,
+  })
 }
 
 export async function updateNoteFolder(id: string, input: Partial<NoteFolder>): Promise<NoteFolder> {
@@ -41,4 +53,13 @@ export async function archiveNoteFolder(id: string): Promise<NoteFolder> {
 
 export async function restoreNoteFolder(id: string): Promise<NoteFolder> {
   return noteFoldersRepo.restoreFolder(id)
+}
+
+function normalizeFolderName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
 }

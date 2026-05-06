@@ -1,7 +1,6 @@
 'use client'
 
 import { Plus, Search, Sparkles } from 'lucide-react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -96,10 +95,7 @@ export function NotesPageHeader({
           <Button
             variant="secondary"
             size="md"
-            onClick={() => {
-              onNewFolder()
-              toast.info('Criação de pasta em breve.')
-            }}
+            onClick={onNewFolder}
           >
             <Plus aria-hidden /> Pasta
           </Button>
