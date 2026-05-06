@@ -1,9 +1,7 @@
 'use client'
-import Link from 'next/link'
-import { Share2, Megaphone, ArrowRight, TrendingUp } from 'lucide-react'
+import { Share2, Megaphone, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { formatBRL } from '@/lib/utils/currency'
-import { cn } from '@/lib/utils/cn'
 import type { SocialMediaSignal, MetaAdsSignal } from '@/lib/mocks/growth-signals'
 
 interface Props { social: SocialMediaSignal; ads: MetaAdsSignal }
@@ -44,9 +42,9 @@ export function GrowthSignals({ social, ads }: Props) {
           </div>
         </div>
 
-        <Link href="/social-media" className={cn('mt-4 inline-flex items-center gap-1 text-xs font-medium text-text-secondary', 'transition-colors duration-fast hover:text-text')}>
-          Ver Social Media <ArrowRight className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-        </Link>
+        <span className="mt-4 inline-flex items-center rounded-md border border-border-subtle bg-surface/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+          Integração futura
+        </span>
       </Card>
 
       <Card className="p-5 transition-colors duration-fast hover:border-primary/20">
@@ -67,9 +65,9 @@ export function GrowthSignals({ social, ads }: Props) {
           </div>
         </div>
 
-        <Link href="/meta-ads" className={cn('mt-4 inline-flex items-center gap-1 text-xs font-medium text-text-secondary', 'transition-colors duration-fast hover:text-text')}>
-          Ver Meta Ads <ArrowRight className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-        </Link>
+        <span className="mt-4 inline-flex items-center rounded-md border border-border-subtle bg-surface/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+          Integração futura
+        </span>
       </Card>
     </section>
   )

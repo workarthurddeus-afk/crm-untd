@@ -33,14 +33,6 @@ export function TopMetricCard({ label, value, description, Icon, accent = 'prima
         'transition-colors duration-fast hover:border-border'
       )}
     >
-      {accent === 'primary' && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full opacity-50 transition-opacity duration-fast group-hover:opacity-70"
-          style={{ background: 'radial-gradient(closest-side, rgba(83,50,234,0.28), transparent 70%)' }}
-        />
-      )}
-
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-text-muted">{label}</p>

@@ -3,14 +3,14 @@ import { Card } from '@/components/ui/card'
 
 export function DashboardSkeleton() {
   return (
-    <div className="mx-auto max-w-[1400px] px-8 py-6 space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-6 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="space-y-2">
           <Skeleton className="h-7 w-64" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-56" />
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-9 w-full sm:w-64 lg:w-72" />
           <Skeleton className="h-9 w-20" />
           <Skeleton className="h-9 w-20" />
           <Skeleton className="h-9 w-20" />

@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
@@ -53,11 +53,12 @@ export function DashboardHeader({
     [query, leads, tasks, notes]
   )
   const hasQuery = query.trim().length > 0
+  const resultsId = useId()
   const dateCapitalized = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)
   const Icon = greeting.Icon
 
   return (
-    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <header className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <Icon className={`h-5 w-5 ${greeting.iconClass}`} strokeWidth={1.75} aria-hidden />
@@ -70,27 +71,38 @@ export function DashboardHeader({
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative w-full sm:w-64 lg:w-72">
+      <div data-dashboard-header-actions className="flex flex-wrap items-center gap-2 xl:justify-end">
+        <div className="relative min-w-[min(100%,18rem)] flex-1 sm:min-w-64 xl:w-72 xl:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" strokeWidth={1.75} aria-hidden />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setQuery('')
+              }
+            }}
             placeholder="Buscar lead, tarefa, nota..."
             className="h-9 pl-9 text-sm"
             aria-label="Busca global do Dashboard"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={hasQuery}
+            aria-controls={hasQuery ? resultsId : undefined}
           />
           {hasQuery && (
             <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-lg-token">
               {searchResults.length > 0 ? (
-                <ul className="max-h-80 overflow-y-auto p-1.5">
+                <ul id={resultsId} role="listbox" className="max-h-80 overflow-y-auto p-1.5">
                   {searchResults.map((result) => {
                     const ResultIcon = resultIcon[result.type]
                     return (
-                      <li key={`${result.type}-${result.id}`}>
+                      <li key={`${result.type}-${result.id}`} role="none">
                         <Link
                           href={result.href}
                           onClick={() => setQuery('')}
+                          role="option"
+                          aria-selected={false}
                           className="flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-fast hover:bg-primary-muted focus-visible:bg-primary-muted focus-visible:outline-none"
                         >
                           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/12 text-primary">
@@ -113,20 +125,20 @@ export function DashboardHeader({
                   })}
                 </ul>
               ) : (
-                <div className="px-4 py-3 text-sm text-text-muted">
+                <div id={resultsId} role="status" className="px-4 py-3 text-sm text-text-muted">
                   Nenhum resultado encontrado.
                 </div>
               )}
             </div>
           )}
         </div>
-        <Button variant="secondary" size="sm" onClick={onCreateLead}>
+        <Button variant="secondary" size="sm" onClick={onCreateLead} className="shrink-0">
           <Plus aria-hidden /> Lead
         </Button>
-        <Button variant="secondary" size="sm" onClick={onCreateTask}>
+        <Button variant="secondary" size="sm" onClick={onCreateTask} className="shrink-0">
           <ListChecks aria-hidden /> Tarefa
         </Button>
-        <Button variant="secondary" size="sm" onClick={onCreateNote}>
+        <Button variant="secondary" size="sm" onClick={onCreateNote} className="shrink-0">
           <NotebookPen aria-hidden /> Nota
         </Button>
       </div>

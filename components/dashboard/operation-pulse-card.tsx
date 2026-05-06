@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { Card } from '@/components/ui/card'
 import { PeriodToggle } from './period-toggle'
+import { dashboardChartTokens } from './dashboard-chart-tokens'
 import { activityForPeriod, totalInteractions, totalsByCategory, type ActivityPeriod } from '@/lib/utils/operation-activity'
 import type { OperationActivityPoint } from '@/lib/types/operation-activity'
 
@@ -77,29 +78,29 @@ export function OperationPulseCard({ activity }: Props) {
           <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
               <linearGradient id="pulseGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5332ea" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#5332ea" stopOpacity={0} />
+                <stop offset="0%" stopColor={dashboardChartTokens.primary} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={dashboardChartTokens.primary} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e2b40" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={dashboardChartTokens.border} vertical={false} />
             <XAxis
               dataKey="label"
               interval={tickInterval}
-              tick={{ fill: '#6e6b87', fontSize: 11 }}
+              tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
               tickLine={false}
-              axisLine={{ stroke: '#2e2b40' }}
+              axisLine={{ stroke: dashboardChartTokens.border }}
             />
             <YAxis
-              tick={{ fill: '#6e6b87', fontSize: 11 }}
+              tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={32}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#5332ea', strokeOpacity: 0.4, strokeDasharray: '3 3' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: dashboardChartTokens.primary, strokeOpacity: 0.4, strokeDasharray: '3 3' }} />
             <Area
               type="monotone"
               dataKey="total"
-              stroke="#5332ea"
+              stroke={dashboardChartTokens.primary}
               strokeWidth={2}
               fill="url(#pulseGradient)"
               isAnimationActive={false}

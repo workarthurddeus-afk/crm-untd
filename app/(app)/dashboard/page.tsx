@@ -83,7 +83,7 @@ export default function DashboardPage() {
         initial={reduced ? false : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: tokens.duration.slow / 1000, ease: tokens.easing.enter }}
-        className="mx-auto max-w-[1400px] px-8 py-6 space-y-6"
+        className="mx-auto max-w-[1400px] px-4 py-6 space-y-6 sm:px-6 lg:px-8"
       >
         <DashboardHeader
           today={today}
