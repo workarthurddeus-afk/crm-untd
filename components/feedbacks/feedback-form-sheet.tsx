@@ -47,6 +47,7 @@ interface Props {
   open: boolean
   feedback: Feedback | null
   leads: Lead[]
+  defaultLeadId?: string | null
   onOpenChange: (open: boolean) => void
   onCreate: (input: FeedbackInput) => Promise<Feedback>
   onUpdate: (id: string, input: Partial<FeedbackInput>) => Promise<Feedback>
@@ -95,6 +96,7 @@ export function FeedbackFormSheet({
   open,
   feedback,
   leads,
+  defaultLeadId,
   onOpenChange,
   onCreate,
   onUpdate,
@@ -106,11 +108,13 @@ export function FeedbackFormSheet({
   const [isSaving, setIsSaving] = useState(false)
   const isEdit = Boolean(feedback)
 
-  const seed = `${open ? '1' : '0'}|${feedback?.id ?? 'new'}|${feedback?.updatedAt ?? ''}`
+  const seed = `${open ? '1' : '0'}|${feedback?.id ?? 'new'}|${feedback?.updatedAt ?? ''}|${defaultLeadId ?? ''}`
   const [prevSeed, setPrevSeed] = useState(seed)
   if (open && seed !== prevSeed) {
     setPrevSeed(seed)
-    setForm(feedbackToFormState(feedback))
+    const next = feedbackToFormState(feedback)
+    if (!feedback && defaultLeadId) next.relatedLeadId = defaultLeadId
+    setForm(next)
     setTitleError(undefined)
     setContentError(undefined)
     setIsSaving(false)

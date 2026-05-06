@@ -11,9 +11,11 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
 import { LeadDetailHeader } from '@/components/leads/lead-detail-header'
 import { LeadDetailTabs } from '@/components/leads/lead-detail-tabs'
+import { LeadInteractionDialog } from '@/components/leads/lead-interaction-dialog'
 import { NextActionCard } from '@/components/leads/next-action-card'
 import { QuickFacts } from '@/components/leads/quick-facts'
 import { LeadDetailSkeleton } from '@/components/leads/lead-detail-skeleton'
+import { interactionsRepo } from '@/lib/repositories/interaction.repository'
 import { leadsRepo } from '@/lib/repositories/leads.repository'
 
 interface PageProps {
@@ -25,6 +27,7 @@ export default function LeadDetailPage({ params }: PageProps) {
   const { lead, isLoading } = useLead(id)
   const { stages } = usePipelineStages()
   const [editOpen, setEditOpen] = useState(false)
+  const [interactionOpen, setInteractionOpen] = useState(false)
 
   if (isLoading) {
     return <LeadDetailSkeleton />
@@ -110,9 +113,7 @@ export default function LeadDetailPage({ params }: PageProps) {
             onMarkWon={confirmMarkWon}
             onMarkLost={confirmMarkLost}
             onReopen={reopen}
-            onLogInteraction={() =>
-              toast.info('Diálogo de interação chega na Task 21.')
-            }
+            onLogInteraction={() => setInteractionOpen(true)}
           />
           <LeadDetailTabs lead={lead} stage={stage} />
         </div>
@@ -122,6 +123,7 @@ export default function LeadDetailPage({ params }: PageProps) {
             stages={stages}
             onEdit={() => setEditOpen(true)}
             onReopen={reopen}
+            onLogInteraction={() => setInteractionOpen(true)}
           />
           <QuickFacts lead={lead} />
         </aside>
@@ -130,6 +132,13 @@ export default function LeadDetailPage({ params }: PageProps) {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         initial={lead}
+      />
+      <LeadInteractionDialog
+        open={interactionOpen}
+        leadId={lead.id}
+        leadName={lead.name}
+        onOpenChange={setInteractionOpen}
+        onCreate={interactionsRepo.create}
       />
     </div>
   )

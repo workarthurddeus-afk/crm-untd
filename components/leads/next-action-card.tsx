@@ -2,7 +2,6 @@
 
 import { ArrowRight, Info, Lock, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
@@ -15,6 +14,7 @@ interface Props {
   stages: PipelineStage[]
   onEdit: () => void
   onReopen: () => void
+  onLogInteraction: () => void
 }
 
 const toneIcon: Record<'urgent' | 'recommended' | 'info' | 'closed', LucideIcon> = {
@@ -25,10 +25,8 @@ const toneIcon: Record<'urgent' | 'recommended' | 'info' | 'closed', LucideIcon>
 }
 
 const toneSurface: Record<'urgent' | 'recommended' | 'info' | 'closed', string> = {
-  urgent:
-    'bg-gradient-to-br from-danger/[0.07] to-transparent border-l-2 border-l-danger',
-  recommended:
-    'bg-gradient-to-br from-primary/[0.07] to-transparent border-l-2 border-l-primary',
+  urgent: 'bg-gradient-to-br from-danger/[0.07] to-transparent border-l-2 border-l-danger',
+  recommended: 'bg-gradient-to-br from-primary/[0.07] to-transparent border-l-2 border-l-primary',
   info: '',
   closed: 'opacity-90',
 }
@@ -43,7 +41,7 @@ const toneIconColor: Record<'urgent' | 'recommended' | 'info' | 'closed', string
 const toneLabel: Record<'urgent' | 'recommended' | 'info' | 'closed', string> = {
   urgent: 'Urgente',
   recommended: 'Recomendado',
-  info: 'Próxima ação',
+  info: 'Proxima acao',
   closed: 'Encerrado',
 }
 
@@ -54,7 +52,7 @@ const toneLabelColor: Record<'urgent' | 'recommended' | 'info' | 'closed', strin
   closed: 'text-text-muted',
 }
 
-export function NextActionCard({ lead, stages, onEdit, onReopen }: Props) {
+export function NextActionCard({ lead, stages, onEdit, onReopen, onLogInteraction }: Props) {
   const action = computeNextAction(lead, stages, new Date())
   const Icon = toneIcon[action.tone]
 
@@ -69,15 +67,9 @@ export function NextActionCard({ lead, stages, onEdit, onReopen }: Props) {
       case 'log-interaction':
       case 'mark-meeting':
       case 'send-proposal':
-        toast.info('Diálogo de interação chega na Task 21.')
+        onLogInteraction()
         return
     }
-  }
-
-  async function handleSecondary() {
-    // Closed leads with the "won" tone offer a quick "add note" route
-    // that we route through the same placeholder until Task 21 lands.
-    toast.info('Notas livres chegam na Phase 2.')
   }
 
   return (
@@ -109,26 +101,14 @@ export function NextActionCard({ lead, stages, onEdit, onReopen }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          variant={action.tone === 'closed' ? 'secondary' : 'primary'}
-          size="sm"
-          onClick={handleClick}
-          className="w-full"
-        >
-          {action.ctaLabel}
-        </Button>
-        {action.tone === 'closed' && action.ctaIntent === 'reopen' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSecondary}
-            className="shrink-0"
-          >
-            Nota
-          </Button>
-        )}
-      </div>
+      <Button
+        variant={action.tone === 'closed' ? 'secondary' : 'primary'}
+        size="sm"
+        onClick={handleClick}
+        className="w-full"
+      >
+        {action.ctaLabel}
+      </Button>
     </Card>
   )
 }
