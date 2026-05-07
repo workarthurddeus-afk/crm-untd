@@ -5,7 +5,7 @@ import { createNoteFolder, getNoteFolders } from '../note-folders.service'
 describe('note-folders.service', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await noteFoldersRepo.reset()
+    await noteFoldersRepo.seedDemoData()
   })
 
   it('creates a folder with normalized editable fields', async () => {

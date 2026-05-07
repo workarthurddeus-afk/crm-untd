@@ -111,14 +111,18 @@ export function ICPHero({ profile, leads }: Props) {
               Leitura do pipeline
             </p>
             <h2 className="mt-2 font-display text-3xl font-bold leading-tight tracking-tight text-text lg:text-4xl">
-              {analytics.distribution.high > 0
+              {analytics.scoredLeads.length === 0
+                ? 'Cadastre leads para calcular aderencia ao ICP.'
+                : analytics.distribution.high > 0
                 ? `${analytics.distribution.high} oportunidades com fit alto para priorizar.`
                 : analytics.alignedCount > 0
                   ? `${analytics.alignedCount} leads perto do ICP alvo.`
                   : 'O pipeline ainda precisa de leads mais alinhados ao ICP.'}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-text-secondary sm:text-base">
-              {profile.description}
+              {analytics.scoredLeads.length === 0
+                ? 'Assim que os primeiros leads reais entrarem no CRM, este painel mostra aderencia media, oportunidades alinhadas e gargalos de fit.'
+                : profile.description}
             </p>
           </div>
 

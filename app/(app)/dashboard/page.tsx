@@ -12,8 +12,6 @@ import { useBusinessMetricsSettings } from '@/lib/hooks/use-settings'
 import { generateAlerts } from '@/lib/services/alerts.service'
 import { deriveBusinessMetrics } from '@/lib/utils/business-math'
 import { getDashboardBusinessMetrics } from '@/lib/utils/dashboard-metrics'
-import { operationActivitySeed } from '@/lib/mocks/operation-activity'
-import { socialMediaMock, metaAdsMock } from '@/lib/mocks/growth-signals'
 import { getStrategicMemory } from '@/lib/utils/strategic-memory'
 import { getPipelineSummary } from '@/lib/utils/pipeline-summary'
 import { getBestOpportunity } from '@/lib/utils/best-opportunity'
@@ -28,7 +26,6 @@ import { BusinessHealthCard } from '@/components/dashboard/business-health-card'
 import { ActionCenter } from '@/components/dashboard/action-center'
 import { PipelineMovementCard } from '@/components/dashboard/pipeline-movement-card'
 import { FounderRadar } from '@/components/dashboard/founder-radar'
-import { GrowthSignals } from '@/components/dashboard/growth-signals'
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton'
 import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
 import { TaskFormSheet } from '@/components/tasks/task-form-sheet'
@@ -98,7 +95,7 @@ export default function DashboardPage() {
         <TopMetricsRow metrics={businessMetrics} leads={leads} tasks={tasks} alerts={alerts} today={today} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] items-start">
-          <OperationPulseCard activity={operationActivitySeed} />
+          <OperationPulseCard activity={[]} />
           <div className="space-y-6">
             <PriorityOfDayCard tasks={tasks} today={today} />
             {memory && (
@@ -118,7 +115,6 @@ export default function DashboardPage() {
 
         <FounderRadar insights={insights} opportunity={opportunity} />
 
-        <GrowthSignals social={socialMediaMock} ads={metaAdsMock} />
       </motion.div>
 
       <LeadFormDialog open={leadDialogOpen} onClose={() => setLeadDialogOpen(false)} />

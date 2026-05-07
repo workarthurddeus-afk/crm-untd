@@ -1,5 +1,6 @@
 'use client'
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
@@ -74,39 +75,54 @@ export function OperationPulseCard({ activity }: Props) {
       </div>
 
       <div className="mt-6 h-[260px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-            <defs>
-              <linearGradient id="pulseGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={dashboardChartTokens.primary} stopOpacity={0.5} />
-                <stop offset="100%" stopColor={dashboardChartTokens.primary} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={dashboardChartTokens.border} vertical={false} />
-            <XAxis
-              dataKey="label"
-              interval={tickInterval}
-              tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
-              tickLine={false}
-              axisLine={{ stroke: dashboardChartTokens.border }}
-            />
-            <YAxis
-              tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
-              tickLine={false}
-              axisLine={false}
-              width={32}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: dashboardChartTokens.primary, strokeOpacity: 0.4, strokeDasharray: '3 3' }} />
-            <Area
-              type="monotone"
-              dataKey="total"
-              stroke={dashboardChartTokens.primary}
-              strokeWidth={2}
-              fill="url(#pulseGradient)"
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <defs>
+                <linearGradient id="pulseGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={dashboardChartTokens.primary} stopOpacity={0.5} />
+                  <stop offset="100%" stopColor={dashboardChartTokens.primary} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={dashboardChartTokens.border} vertical={false} />
+              <XAxis
+                dataKey="label"
+                interval={tickInterval}
+                tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
+                tickLine={false}
+                axisLine={{ stroke: dashboardChartTokens.border }}
+              />
+              <YAxis
+                tick={{ fill: dashboardChartTokens.textMuted, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                width={32}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: dashboardChartTokens.primary, strokeOpacity: 0.4, strokeDasharray: '3 3' }} />
+              <Area
+                type="monotone"
+                dataKey="total"
+                stroke={dashboardChartTokens.primary}
+                strokeWidth={2}
+                fill="url(#pulseGradient)"
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-background/30 px-6 text-center">
+            <p className="font-display text-base font-semibold text-text">Operacao limpa</p>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-text-secondary">
+              Cadastre o primeiro lead ou tarefa para o pulso operacional comecar a registrar atividade real.
+            </p>
+            <Link
+              href="/leads"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-md border border-primary/25 bg-primary-muted px-4 text-sm font-medium text-primary transition-colors duration-fast hover:border-primary/45"
+            >
+              Criar primeiro lead
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-border-subtle pt-4">

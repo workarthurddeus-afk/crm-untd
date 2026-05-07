@@ -4,7 +4,12 @@ import { feedbacksRepo } from '../feedbacks.repository'
 describe('feedbacksRepo', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await feedbacksRepo.reset()
+    await feedbacksRepo.seedDemoData()
+  })
+
+  it('starts empty until demo feedbacks are loaded explicitly', async () => {
+    await feedbacksRepo.clear()
+    await expect(feedbacksRepo.listFeedbacks()).resolves.toEqual([])
   })
 
   it('lists active feedbacks by default and excludes archived feedbacks', async () => {

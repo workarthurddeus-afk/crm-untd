@@ -165,35 +165,44 @@ export function PipelineICPAnalysis({ profile, leads }: Props) {
           <h3 className="font-display text-sm font-semibold text-text">Explicabilidade por lead</h3>
         </div>
         <div className="mt-4 grid gap-3 xl:grid-cols-3">
-          {analytics.scoredLeads.slice(0, 6).map((item) => {
-            const positives = item.score.criteria.filter((criterion) => criterion.contribution > 0)
-            const negatives = item.score.criteria.filter((criterion) => criterion.contribution < 0)
-            return (
-              <div key={item.lead.id} className="rounded-lg border border-border-subtle bg-background/30 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-text">{item.lead.company}</p>
-                    <p className="mt-1 truncate text-xs text-text-secondary">{item.lead.niche}</p>
+          {analytics.scoredLeads.length > 0 ? (
+            analytics.scoredLeads.slice(0, 6).map((item) => {
+              const positives = item.score.criteria.filter((criterion) => criterion.contribution > 0)
+              const negatives = item.score.criteria.filter((criterion) => criterion.contribution < 0)
+              return (
+                <div key={item.lead.id} className="rounded-lg border border-border-subtle bg-background/30 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-text">{item.lead.company}</p>
+                      <p className="mt-1 truncate text-xs text-text-secondary">{item.lead.niche}</p>
+                    </div>
+                    <Badge variant={item.score.total >= 80 ? 'success' : item.score.total >= 50 ? 'default' : 'outline'}>
+                      {item.score.total}
+                    </Badge>
                   </div>
-                  <Badge variant={item.score.total >= 80 ? 'success' : item.score.total >= 50 ? 'default' : 'outline'}>
-                    {item.score.total}
-                  </Badge>
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary">
+                    Puxa para cima
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+                    {positives.slice(0, 2).map((criterion) => criterion.name).join(' / ') || 'Sem sinais fortes.'}
+                  </p>
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary">
+                    Puxa para baixo
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+                    {negatives.slice(0, 2).map((criterion) => criterion.name).join(' / ') || 'Sem red flag ativa.'}
+                  </p>
                 </div>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary">
-                  Puxa para cima
-                </p>
-                <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-text-secondary">
-                  {positives.slice(0, 2).map((criterion) => criterion.name).join(' / ') || 'Sem sinais fortes.'}
-                </p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary">
-                  Puxa para baixo
-                </p>
-                <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-text-secondary">
-                  {negatives.slice(0, 2).map((criterion) => criterion.name).join(' / ') || 'Sem red flag ativa.'}
-                </p>
-              </div>
-            )
-          })}
+              )
+            })
+          ) : (
+            <div className="rounded-lg border border-dashed border-border-subtle bg-background/25 p-5 xl:col-span-3">
+              <p className="text-sm font-medium text-text">Nenhum lead para explicar ainda.</p>
+              <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                Cadastre leads reais para ver quais criterios elevam ou reduzem o score de cada oportunidade.
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </section>

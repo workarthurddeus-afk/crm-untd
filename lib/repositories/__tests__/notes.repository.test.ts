@@ -4,7 +4,12 @@ import { notesRepo } from '../notes.repository'
 describe('notesRepo', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await notesRepo.reset()
+    await notesRepo.seedDemoData()
+  })
+
+  it('starts empty until demo notes are loaded explicitly', async () => {
+    await notesRepo.clear()
+    await expect(notesRepo.listNotes()).resolves.toEqual([])
   })
 
   it('lists non-archived and non-deleted notes by default', async () => {

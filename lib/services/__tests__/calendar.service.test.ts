@@ -52,7 +52,7 @@ function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 describe('calendar.service', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await calendarEventsRepo.reset()
+    await calendarEventsRepo.seedDemoData()
   })
 
   it('getTodaySchedule returns today events ordered for the dashboard', async () => {

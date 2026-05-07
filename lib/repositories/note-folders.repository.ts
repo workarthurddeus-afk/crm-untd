@@ -45,6 +45,12 @@ export const noteFoldersRepo = {
   async reset(): Promise<void> {
     await storageRepo.reset()
   },
+  async clear(): Promise<void> {
+    await storageRepo.clear()
+  },
+  async seedDemoData(): Promise<void> {
+    await storageRepo.seedDemoData()
+  },
   subscribe(listener: () => void): () => void {
     return storageRepo.subscribe(listener)
   },

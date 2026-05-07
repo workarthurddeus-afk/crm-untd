@@ -51,8 +51,10 @@ function makeTask(overrides: Partial<Task> = {}): Task {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await tasksRepo.seedDemoData()
+  await calendarEventsRepo.seedDemoData()
 })
 
 describe('tasksDueToday', () => {

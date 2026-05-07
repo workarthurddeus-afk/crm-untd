@@ -5,10 +5,15 @@ import { noteFoldersRepo } from '../note-folders.repository'
 describe('noteFoldersRepo', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await noteFoldersRepo.reset()
+    await noteFoldersRepo.seedDemoData()
   })
 
-  it('seeds default strategic folders', async () => {
+  it('starts empty until default folders are loaded explicitly', async () => {
+    await noteFoldersRepo.clear()
+    await expect(noteFoldersRepo.listFolders()).resolves.toEqual([])
+  })
+
+  it('loads default strategic folders only when requested', async () => {
     const folders = await noteFoldersRepo.listFolders()
 
     expect(folders.map((folder) => folder.id)).toEqual(noteFoldersSeed.map((folder) => folder.id))

@@ -21,9 +21,9 @@ const today = new Date('2026-05-05T12:00:00.000Z')
 describe('notes.service', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await noteFoldersRepo.reset()
-    await notesRepo.reset()
-    await tasksRepo.reset()
+    await noteFoldersRepo.seedDemoData()
+    await notesRepo.seedDemoData()
+    await tasksRepo.seedDemoData()
   })
 
   it('getStrategicMemory returns a non-archived, non-deleted note', async () => {

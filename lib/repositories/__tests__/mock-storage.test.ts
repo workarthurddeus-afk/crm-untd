@@ -20,10 +20,38 @@ describe('createMockRepository', () => {
     expect(items).toEqual([])
   })
 
-  it('seeds storage on first read when seed provided', async () => {
+  it('does not seed storage on first read when seed provided', async () => {
     const seeded = createMockRepository<Item>('test-seeded', [
       { id: '1', name: 'A', value: 1, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
     ])
+    const items = await seeded.list()
+    expect(items).toEqual([])
+  })
+
+  it('loads demo data only when explicitly requested', async () => {
+    const seeded = createMockRepository<Item>('test-explicit-seeded', [
+      { id: '1', name: 'A', value: 1, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+    ])
+
+    await seeded.seedDemoData()
+    const items = await seeded.list()
+
+    expect(items).toHaveLength(1)
+    expect(items[0]?.name).toBe('A')
+  })
+
+  it('can opt into auto seeding for real defaults', async () => {
+    const seeded = createMockRepository<Item>(
+      'test-auto-seeded',
+      [{ id: '1', name: 'A', value: 1, createdAt: '2026-01-01', updatedAt: '2026-01-01' }],
+      { autoSeed: true, resetToSeed: true }
+    )
+
+    expect(await seeded.list()).toHaveLength(1)
+
+    await seeded.create({ name: 'B', value: 2 })
+    await seeded.reset()
+
     const items = await seeded.list()
     expect(items).toHaveLength(1)
     expect(items[0]?.name).toBe('A')

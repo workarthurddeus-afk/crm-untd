@@ -7,7 +7,12 @@ describe('interactionsRepo', () => {
     window.localStorage.clear()
   })
 
-  it('seeds realistic interactions for leads 001 through 005', async () => {
+  it('starts empty until demo interactions are loaded explicitly', async () => {
+    await expect(interactionsRepo.list()).resolves.toEqual([])
+  })
+
+  it('loads realistic interactions for leads 001 through 005 only when requested', async () => {
+    await interactionsRepo.seedDemoData()
     const interactions = await interactionsRepo.list()
 
     expect(interactions).toHaveLength(20)
@@ -23,6 +28,7 @@ describe('interactionsRepo', () => {
   })
 
   it('filters interactions by leadId', async () => {
+    await interactionsRepo.seedDemoData()
     const interactions = await interactionsRepo.list({ leadId: 'lead-001' })
 
     expect(interactions).toHaveLength(5)
@@ -44,6 +50,7 @@ describe('interactionsRepo', () => {
   })
 
   it('updates an interaction without changing its id or leadId', async () => {
+    await interactionsRepo.seedDemoData()
     const updated = await interactionsRepo.update('interaction-001-01', {
       id: 'changed',
       leadId: 'changed-lead',

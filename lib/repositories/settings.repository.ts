@@ -4,7 +4,10 @@ import type { BusinessMetricsSettings, SettingsUpdateInput, UntdSettings } from 
 import { nowIso } from '@/lib/utils/date'
 import { createMockRepository } from './mock-storage'
 
-const storageRepo = createMockRepository<UntdSettings>('untd-settings', [settingsSeed])
+const storageRepo = createMockRepository<UntdSettings>('untd-settings', [settingsSeed], {
+  autoSeed: true,
+  resetToSeed: true,
+})
 
 async function readSettings(): Promise<UntdSettings> {
   const current = (await storageRepo.list())[0] ?? settingsSeed

@@ -20,7 +20,7 @@ import {
 describe('feedbacks.service', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await feedbacksRepo.reset()
+    await feedbacksRepo.seedDemoData()
   })
 
   it('creates feedback through schema validation and keeps unresolved inbox active', async () => {

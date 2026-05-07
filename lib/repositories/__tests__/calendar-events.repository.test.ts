@@ -6,7 +6,12 @@ const currentDate = new Date('2026-05-05T12:00:00.000Z')
 describe('calendarEventsRepo', () => {
   beforeEach(async () => {
     window.localStorage.clear()
-    await calendarEventsRepo.reset()
+    await calendarEventsRepo.seedDemoData()
+  })
+
+  it('starts empty until demo events are loaded explicitly', async () => {
+    await calendarEventsRepo.clear()
+    await expect(calendarEventsRepo.listEvents()).resolves.toEqual([])
   })
 
   it('lists active events by default', async () => {

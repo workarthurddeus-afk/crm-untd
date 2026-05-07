@@ -7,7 +7,12 @@ describe('leadsRepo', () => {
     window.localStorage.clear()
   })
 
-  it('seeds 15 realistic UNTD leads', async () => {
+  it('starts empty until demo leads are loaded explicitly', async () => {
+    await expect(leadsRepo.list()).resolves.toEqual([])
+  })
+
+  it('loads 15 realistic UNTD leads only when requested', async () => {
+    await leadsRepo.seedDemoData()
     const leads = await leadsRepo.list()
 
     expect(leads).toHaveLength(15)
@@ -18,6 +23,7 @@ describe('leadsRepo', () => {
   })
 
   it('filters leads by partial fields', async () => {
+    await leadsRepo.seedDemoData()
     const hotLeads = await leadsRepo.list({ temperature: 'hot' })
 
     expect(hotLeads.length).toBeGreaterThan(0)
@@ -44,6 +50,7 @@ describe('leadsRepo', () => {
   })
 
   it('notifies subscribers on mutations', async () => {
+    await leadsRepo.seedDemoData()
     let calls = 0
     const unsubscribe = leadsRepo.subscribe(() => calls++)
 

@@ -7,7 +7,12 @@ describe('tasksRepo', () => {
     window.localStorage.clear()
   })
 
-  it('seeds 12 realistic productivity tasks', async () => {
+  it('starts empty until demo tasks are loaded explicitly', async () => {
+    await expect(tasksRepo.list()).resolves.toEqual([])
+  })
+
+  it('loads 12 realistic productivity tasks only when requested', async () => {
+    await tasksRepo.seedDemoData()
     const tasks = await tasksRepo.list()
 
     expect(tasks).toHaveLength(12)
@@ -18,6 +23,7 @@ describe('tasksRepo', () => {
   })
 
   it('filters tasks by partial fields', async () => {
+    await tasksRepo.seedDemoData()
     const pending = await tasksRepo.list({ status: 'pending' })
 
     expect(pending.length).toBeGreaterThan(0)
@@ -41,6 +47,7 @@ describe('tasksRepo', () => {
   })
 
   it('notifies subscribers on mutations', async () => {
+    await tasksRepo.seedDemoData()
     let calls = 0
     const unsubscribe = tasksRepo.subscribe(() => calls++)
 

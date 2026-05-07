@@ -8,6 +8,7 @@ import {
   Check,
   ChevronRight,
   CircleDashed,
+  Database,
   Loader2,
   PlugZap,
   RefreshCcw,
@@ -15,6 +16,8 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
+  Trash2,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -40,11 +43,23 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useSettings } from '@/lib/hooks/use-settings'
+import {
+  clearOperationalWorkspaceData,
+  loadDemoWorkspaceData,
+  resetLocalWorkspace,
+} from '@/lib/services/local-workspace.service'
 import { cn } from '@/lib/utils/cn'
 import type { TaskCategory, TaskImportance } from '@/lib/types'
 import type { IntegrationSettings } from '@/lib/types/settings'
 
-type SettingsSection = 'general' | 'metrics' | 'crm' | 'tasks' | 'product' | 'integrations'
+type SettingsSection =
+  | 'general'
+  | 'metrics'
+  | 'crm'
+  | 'tasks'
+  | 'product'
+  | 'integrations'
+  | 'local-data'
 
 const sections: Array<{
   id: SettingsSection
@@ -58,6 +73,7 @@ const sections: Array<{
   { id: 'tasks', label: 'Tarefas & Calendario', description: 'Defaults de execucao diaria', icon: CalendarClock },
   { id: 'product', label: 'Produto & Vendas', description: 'Oferta, ICP e argumentos', icon: BriefcaseBusiness },
   { id: 'integrations', label: 'Integracoes', description: 'Conexoes futuras do OS', icon: PlugZap },
+  { id: 'local-data', label: 'Dados locais', description: 'Limpeza e modo demonstracao', icon: Database },
 ]
 
 const languageOptions = [
@@ -222,7 +238,10 @@ export default function SettingsPage() {
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+  const [isClearingData, setIsClearingData] = useState(false)
+  const [isLoadingDemo, setIsLoadingDemo] = useState(false)
   const settingsSeed = settings ? `${settings.id}|${settings.updatedAt}` : 'empty'
+  const canLoadDemoData = process.env.NODE_ENV !== 'production'
 
   if (settings && !isDirty && settingsSeed !== formSeed) {
     setFormSeed(settingsSeed)
@@ -298,6 +317,70 @@ export default function SettingsPage() {
       })
     } finally {
       setIsResetting(false)
+    }
+  }
+
+  async function handleClearOperationalData() {
+    const confirmed = window.confirm(
+      'Limpar leads, tarefas, notas, agenda, feedbacks e interacoes salvos localmente?'
+    )
+    if (!confirmed) return
+    setIsClearingData(true)
+    try {
+      await clearOperationalWorkspaceData()
+      toast.success('Dados operacionais limpos', {
+        description: 'O CRM local agora esta pronto para uso real, sem registros de exemplo.',
+      })
+    } catch (err) {
+      toast.error('Nao foi possivel limpar os dados', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    } finally {
+      setIsClearingData(false)
+    }
+  }
+
+  async function handleResetWorkspaceData() {
+    const confirmed = window.confirm(
+      'Resetar o CRM local? Isso limpa dados operacionais e restaura as configuracoes padrao.'
+    )
+    if (!confirmed) return
+    setIsClearingData(true)
+    try {
+      await resetLocalWorkspace()
+      const reset = await actions.resetSettings()
+      setForm(settingsToFormState(reset))
+      setFormSeed(`${reset.id}|${reset.updatedAt}`)
+      setIsDirty(false)
+      toast.success('CRM local resetado', {
+        description: 'Configuracoes padrao preservadas e dados operacionais removidos.',
+      })
+    } catch (err) {
+      toast.error('Nao foi possivel resetar o CRM local', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    } finally {
+      setIsClearingData(false)
+    }
+  }
+
+  async function handleLoadDemoData() {
+    const confirmed = window.confirm(
+      'Carregar dados ficticios apenas para testar a interface? Nao use em operacao real.'
+    )
+    if (!confirmed) return
+    setIsLoadingDemo(true)
+    try {
+      await loadDemoWorkspaceData()
+      toast.success('Dados de exemplo carregados', {
+        description: 'Use apenas para validacao visual e desenvolvimento.',
+      })
+    } catch (err) {
+      toast.error('Nao foi possivel carregar os dados de exemplo', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    } finally {
+      setIsLoadingDemo(false)
     }
   }
 
@@ -675,6 +758,119 @@ export default function SettingsPage() {
                     <p className="mt-1 text-sm leading-relaxed text-text-muted">
                       Esta area deixa o produto pronto para integrar depois, mas nenhum token,
                       OAuth ou webhook foi implementado agora.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </SectionPanel>
+          )}
+
+          {activeSection === 'local-data' && (
+            <SectionPanel
+              title="Dados locais"
+              description="Controle os registros salvos neste navegador antes de conectar Supabase e deploy."
+              icon={Database}
+            >
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-xl border border-border-subtle bg-background/35 p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-danger/25 bg-danger/10 text-danger">
+                      <Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-display text-sm font-semibold text-text">
+                        Limpar dados operacionais
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                        Remove leads, tarefas, notas, eventos, feedbacks e interacoes locais. As
+                        preferencias do workspace continuam preservadas.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => void handleClearOperationalData()}
+                        disabled={isClearingData || isLoadingDemo}
+                      >
+                        {isClearingData ? (
+                          <Loader2 className="animate-spin" aria-hidden />
+                        ) : (
+                          <Trash2 aria-hidden />
+                        )}
+                        Limpar operacao
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border-subtle bg-background/35 p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary-muted text-primary">
+                      <RefreshCcw className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-display text-sm font-semibold text-text">
+                        Resetar CRM local
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                        Volta as configuracoes para os defaults reais do UNTD OS e deixa a base
+                        operacional vazia para iniciar o uso real.
+                      </p>
+                      <Button
+                        className="mt-4"
+                        onClick={() => void handleResetWorkspaceData()}
+                        disabled={isClearingData || isLoadingDemo}
+                      >
+                        {isClearingData ? (
+                          <Loader2 className="animate-spin" aria-hidden />
+                        ) : (
+                          <RefreshCcw aria-hidden />
+                        )}
+                        Resetar local
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {canLoadDemoData && (
+                <div className="rounded-xl border border-warning/25 bg-warning/10 p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-warning" strokeWidth={1.75} aria-hidden />
+                        <p className="font-display text-sm font-semibold text-text">
+                          Dados de exemplo para desenvolvimento
+                        </p>
+                      </div>
+                      <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                        Carrega dados ficticios apenas para testar a interface. Nao use em
+                        operacao real.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleLoadDemoData()}
+                      disabled={isClearingData || isLoadingDemo}
+                    >
+                      {isLoadingDemo ? (
+                        <Loader2 className="animate-spin" aria-hidden />
+                      ) : (
+                        <Sparkles aria-hidden />
+                      )}
+                      Carregar exemplo
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-primary/20 bg-primary-muted p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                  <div>
+                    <p className="text-sm font-medium text-text">Workspace limpo por padrao</p>
+                    <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                      Seeds continuam disponiveis para testes e desenvolvimento, mas nao entram
+                      automaticamente no runtime normal.
                     </p>
                   </div>
                 </div>

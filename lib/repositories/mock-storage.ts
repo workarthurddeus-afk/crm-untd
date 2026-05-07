@@ -26,16 +26,28 @@ function writeStorage<T>(key: string, value: T[]): void {
   window.localStorage.setItem(key, JSON.stringify(value))
 }
 
+interface MockRepositoryOptions {
+  autoSeed?: boolean
+  resetToSeed?: boolean
+}
+
+export type MockRepository<T extends Entity> = Repository<T> & {
+  reset: () => Promise<void>
+  clear: () => Promise<void>
+  seedDemoData: () => Promise<void>
+}
+
 export function createMockRepository<T extends Entity>(
   storageKey: string,
-  seed: T[]
-): Repository<T> & { reset: () => Promise<void> } {
+  seed: T[],
+  options: MockRepositoryOptions = {}
+): MockRepository<T> {
   const listeners = new Set<() => void>()
 
   function getAll(): T[] {
     const stored = readStorage<T>(storageKey)
     if (stored !== null) return stored
-    if (seed.length > 0) {
+    if (options.autoSeed && seed.length > 0) {
       writeStorage(storageKey, seed)
       return [...seed]
     }
@@ -100,6 +112,14 @@ export function createMockRepository<T extends Entity>(
       return () => listeners.delete(listener)
     },
     async reset() {
+      writeStorage(storageKey, options.resetToSeed || options.autoSeed ? seed : [])
+      listeners.forEach((l) => l())
+    },
+    async clear() {
+      writeStorage(storageKey, [])
+      listeners.forEach((l) => l())
+    },
+    async seedDemoData() {
       writeStorage(storageKey, seed)
       listeners.forEach((l) => l())
     },
