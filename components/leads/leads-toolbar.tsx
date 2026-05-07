@@ -71,8 +71,8 @@ export function LeadsToolbar({ onCreate }: Props) {
   )
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-8 py-3">
-      <div className="relative w-full max-w-md flex-1">
+    <div data-leads-toolbar className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6 lg:px-8">
+      <div data-leads-search className="relative min-w-[min(100%,18rem)] flex-1 lg:max-w-md">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted"
           strokeWidth={1.75}
@@ -117,8 +117,8 @@ export function LeadsToolbar({ onCreate }: Props) {
         <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
         Limpar
       </Button>
-      <div className="flex-1" />
-      <Button onClick={onCreate} size="md">
+      <div className="hidden flex-1 lg:block" />
+      <Button onClick={onCreate} size="md" className="w-full sm:w-auto">
         <Plus className="h-4 w-4" strokeWidth={2} />
         Novo lead
       </Button>

@@ -34,6 +34,13 @@ export function FormField({
 }: Props) {
   const errorId = error ? `${htmlFor}-error` : undefined
   const hintId = hint && !error ? `${htmlFor}-hint` : undefined
+  const describedBy = errorId ?? hintId
+  const enhancedChild = React.isValidElement(children)
+    ? React.cloneElement(children, {
+        'aria-describedby': describedBy,
+        ...(errorId ? { 'aria-errormessage': errorId } : {}),
+      } as React.AriaAttributes)
+    : children
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
@@ -48,14 +55,14 @@ export function FormField({
           </span>
         )}
       </Label>
-      {children}
+      {enhancedChild}
       <div className="min-h-[1.1rem] text-[11px] leading-tight">
         {error ? (
           <span id={errorId} role="alert" className="text-danger">
             {error}
           </span>
         ) : hint ? (
-          <span id={hintId} className="text-text-muted">
+          <span id={hintId} className="text-text-secondary">
             {hint}
           </span>
         ) : null}

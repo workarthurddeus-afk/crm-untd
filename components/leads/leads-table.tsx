@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   flexRender,
   getCoreRowModel,
@@ -39,6 +39,18 @@ const STAGE_VARIANTS: Record<string, string> = {
 }
 
 const MAX_STAGGER_ROWS = 12
+type StageBadgeVariant =
+  | 'pipeline-prospect'
+  | 'pipeline-contacted'
+  | 'pipeline-replied'
+  | 'pipeline-followup'
+  | 'pipeline-proposal'
+  | 'pipeline-won'
+  | 'pipeline-lost'
+
+function stageBadgeVariant(stageId: string): StageBadgeVariant {
+  return (STAGE_VARIANTS[stageId] as StageBadgeVariant | undefined) ?? 'pipeline-prospect'
+}
 
 function SortIcon<T>({ column }: { column: Column<T> }) {
   const sort = column.getIsSorted()
@@ -63,7 +75,7 @@ function SortableHeader<T>({
       onClick={() => column.toggleSorting()}
       className={cn(
         'inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide',
-        'text-text-muted transition-colors duration-fast hover:text-text',
+        'text-text-secondary transition-colors duration-fast hover:text-text',
         'focus-visible:outline-none focus-visible:text-text',
         align === 'right' && 'flex-row-reverse',
       )}
@@ -75,7 +87,6 @@ function SortableHeader<T>({
 }
 
 export function LeadsTable({ leads, stages }: Props) {
-  const router = useRouter()
   const reduced = useReducedMotion()
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'icpScore', desc: true },
@@ -86,13 +97,6 @@ export function LeadsTable({ leads, stages }: Props) {
     [stages]
   )
 
-  const navigateTo = useCallback(
-    (id: string) => {
-      router.push(`/leads/${id}`)
-    },
-    [router]
-  )
-
   const columns = useMemo<ColumnDef<Lead>[]>(
     () => [
       {
@@ -100,10 +104,17 @@ export function LeadsTable({ leads, stages }: Props) {
         header: ({ column }) => <SortableHeader column={column} label="Lead" />,
         cell: ({ row }) => (
           <div className="min-w-0">
-            <div className="truncate font-medium text-text">
+            <Link
+              href={`/leads/${row.original.id}`}
+              className={cn(
+                'block truncate rounded-sm font-medium text-text',
+                'transition-colors duration-fast hover:text-primary',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
+              )}
+            >
               {row.original.name}
-            </div>
-            <div className="truncate text-xs text-text-muted">
+            </Link>
+            <div className="truncate text-xs text-text-secondary">
               {row.original.company}
             </div>
           </div>
@@ -124,7 +135,7 @@ export function LeadsTable({ leads, stages }: Props) {
         id: 'origin',
         accessorKey: 'origin',
         header: () => (
-          <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-secondary">
             Origem
           </span>
         ),
@@ -135,7 +146,7 @@ export function LeadsTable({ leads, stages }: Props) {
         id: 'pipelineStageId',
         accessorKey: 'pipelineStageId',
         header: () => (
-          <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-secondary">
             Etapa
           </span>
         ),
@@ -144,17 +155,7 @@ export function LeadsTable({ leads, stages }: Props) {
           if (!stage) {
             return <span className="text-xs text-text-muted">—</span>
           }
-          const variant =
-            (STAGE_VARIANTS[stage.id] as
-              | 'pipeline-prospect'
-              | 'pipeline-contacted'
-              | 'pipeline-replied'
-              | 'pipeline-followup'
-              | 'pipeline-proposal'
-              | 'pipeline-won'
-              | 'pipeline-lost'
-              | undefined) ?? 'pipeline-prospect'
-          return <Badge variant={variant}>{stage.name}</Badge>
+          return <Badge variant={stageBadgeVariant(stage.id)}>{stage.name}</Badge>
         },
         enableSorting: false,
       },
@@ -162,7 +163,7 @@ export function LeadsTable({ leads, stages }: Props) {
         id: 'temperature',
         accessorKey: 'temperature',
         header: () => (
-          <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-secondary">
             Temp
           </span>
         ),
@@ -249,9 +250,55 @@ export function LeadsTable({ leads, stages }: Props) {
   const rows = table.getRowModel().rows
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm-token">
+    <>
+    <div data-leads-mobile-list className="space-y-3 md:hidden">
+      {rows.map((row) => {
+        const item = row.original
+        const stage = stageMap.get(item.pipelineStageId)
+        return (
+          <Link
+            key={item.id}
+            href={`/leads/${item.id}`}
+            className={cn(
+              'block rounded-lg border border-border bg-surface p-4 shadow-sm-token',
+              'transition-colors duration-fast hover:border-primary/30 hover:bg-surface-elevated/45',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-display text-base font-semibold leading-tight text-text">
+                  {item.name}
+                </p>
+                <p className="mt-1 truncate text-sm text-text-secondary">
+                  {item.company} · {item.niche}
+                </p>
+              </div>
+              <ICPScoreRing score={item.icpScore} size={40} strokeWidth={3} />
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <OriginTag origin={item.origin} />
+              <TemperatureBadge value={item.temperature} />
+              {stage && <Badge variant={stageBadgeVariant(stage.id)}>{stage.name}</Badge>}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-border-subtle pt-3 text-xs">
+              <span className="text-text-secondary">Próximo follow-up</span>
+              <span className="font-mono tabular-nums text-text">
+                {item.nextFollowUpAt
+                  ? format(parseISO(item.nextFollowUpAt), 'dd/MM', { locale: ptBR })
+                  : 'Sem data'}
+              </span>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+
+    <div data-leads-table-shell className="hidden overflow-hidden rounded-lg border border-border bg-surface shadow-sm-token md:block">
       <div className="overflow-x-auto">
-        <table className="w-full border-separate border-spacing-0">
+        <table className="w-full min-w-[920px] border-separate border-spacing-0">
           <thead className="sticky top-0 z-10 bg-surface-elevated/80 backdrop-blur-sm">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -259,6 +306,13 @@ export function LeadsTable({ leads, stages }: Props) {
                   <th
                     key={header.id}
                     scope="col"
+                    aria-sort={
+                      header.column.getIsSorted() === 'asc'
+                        ? 'ascending'
+                        : header.column.getIsSorted() === 'desc'
+                          ? 'descending'
+                          : undefined
+                    }
                     style={
                       header.column.columnDef.size
                         ? { width: header.column.columnDef.size }
@@ -290,31 +344,20 @@ export function LeadsTable({ leads, stages }: Props) {
               return (
                 <motion.tr
                   key={row.id}
-                  role="link"
-                  tabIndex={0}
                   initial={reduced ? false : { opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={transition}
-                  onClick={() => navigateTo(row.original.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      navigateTo(row.original.id)
-                    }
-                  }}
                   className={cn(
-                    'group cursor-pointer outline-none',
+                    'group outline-none',
                     'transition-colors duration-fast',
                     'hover:bg-surface-elevated/50',
-                    'focus-visible:bg-surface-elevated/60',
-                    'focus-visible:shadow-[inset_0_0_0_1px_rgba(83,50,234,0.45)]'
+                    'focus-within:bg-surface-elevated/60'
                   )}
-                  aria-label={`Abrir lead ${row.original.name}`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="border-b border-border-subtle px-4 py-3 align-middle group-hover:shadow-[inset_0_0_0_1px_rgba(83,50,234,0.12)] group-last:border-b-0"
+                      className="border-b border-border-subtle px-4 py-3 align-middle group-last:border-b-0"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -329,5 +372,6 @@ export function LeadsTable({ leads, stages }: Props) {
         </table>
       </div>
     </div>
+    </>
   )
 }

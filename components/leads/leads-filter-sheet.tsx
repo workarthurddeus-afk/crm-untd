@@ -120,7 +120,7 @@ function FilterSection({ title, description, children }: FilterSectionProps) {
           {title}
         </h3>
         {description && (
-          <p className="text-xs leading-relaxed text-text-muted">
+          <p className="text-xs leading-relaxed text-text-secondary">
             {description}
           </p>
         )}
@@ -176,7 +176,7 @@ function ScoreInput({
 }) {
   return (
     <label className="space-y-2">
-      <span className="text-xs font-medium uppercase tracking-[0.12em] text-text-muted">
+      <span className="text-xs font-medium uppercase tracking-[0.12em] text-text-secondary">
         {label}
       </span>
       <input
@@ -375,7 +375,7 @@ export function LeadsFilterSheet({ open, onOpenChange }: Props) {
                       <span className="block text-sm font-medium text-text">
                         {option.label}
                       </span>
-                      <span className="block text-xs text-text-muted">
+                      <span className="block text-xs text-text-secondary">
                         {option.description}
                       </span>
                     </span>

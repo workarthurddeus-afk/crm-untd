@@ -68,9 +68,9 @@ export default function LeadsPage() {
 
   return (
     <div>
-      <PageHeader title="Leads" description={description} />
+      <PageHeader title="Leads" description={description} className="flex-col px-4 sm:flex-row sm:px-6 lg:px-8" />
       <LeadsToolbar onCreate={() => setShowCreate(true)} />
-      <div className="px-8 py-6">
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
         {isLoading ? (
           <LeadsTableSkeleton />
         ) : filtered.length === 0 ? (

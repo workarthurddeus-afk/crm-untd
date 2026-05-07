@@ -25,7 +25,7 @@ export function LeadsTableSkeleton() {
                   key={header.label}
                   className="border-b border-border px-4 py-3 text-left"
                 >
-                  <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                  <span className="text-xs font-medium uppercase tracking-wide text-text-secondary">
                     {header.label}
                   </span>
                 </th>

@@ -84,7 +84,7 @@ function Section({ title, children }: SectionProps) {
         </h3>
         <Separator />
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">{children}</div>
     </section>
   )
 }
@@ -215,7 +215,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-2xl flex flex-col p-0 gap-0">
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-1 min-h-0 flex-col"
@@ -409,7 +409,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
                   htmlFor="lead-stage"
                   required
                   error={errors.pipelineStageId?.message}
-                  className="col-span-2"
+                  className="md:col-span-2"
                 >
                   <Controller
                     name="pipelineStageId"
@@ -470,7 +470,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
                 <FormField
                   label="Dor principal"
                   htmlFor="lead-pain"
-                  className="col-span-2"
+                  className="md:col-span-2"
                   error={errors.pain?.message}
                   hint="O problema central que esse lead precisa resolver."
                 >
@@ -484,7 +484,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
                 <FormField
                   label="Notas internas"
                   htmlFor="lead-notes"
-                  className="col-span-2"
+                   className="md:col-span-2"
                   error={errors.internalNotes?.message}
                 >
                   <Textarea
@@ -498,12 +498,13 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border-subtle bg-surface-elevated/40">
+          <div className="flex flex-col-reverse gap-2 px-6 py-4 border-t border-border-subtle bg-surface-elevated/40 sm:flex-row sm:items-center sm:justify-end">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
               disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
@@ -511,7 +512,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
               type="submit"
               variant="primary"
               disabled={isSubmitting}
-              className="min-w-[128px]"
+              className="w-full sm:w-auto sm:min-w-[128px]"
             >
               {isSubmitting && (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
