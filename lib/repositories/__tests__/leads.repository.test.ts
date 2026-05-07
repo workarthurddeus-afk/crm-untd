@@ -11,6 +11,24 @@ describe('leadsRepo', () => {
     await expect(leadsRepo.list()).resolves.toEqual([])
   })
 
+  it('clears legacy fake leads already saved in localStorage', async () => {
+    window.localStorage.setItem(
+      'untd-leads',
+      JSON.stringify([
+        ...leadsSeed,
+        {
+          ...leadsSeed[0],
+          id: 'legacy-extra-lead',
+          name: 'Lead legado',
+          company: 'Registro antigo',
+        },
+      ])
+    )
+
+    await expect(leadsRepo.list()).resolves.toEqual([])
+    expect(window.localStorage.getItem('untd-leads')).toBe('[]')
+  })
+
   it('loads 15 realistic UNTD leads only when requested', async () => {
     await leadsRepo.seedDemoData()
     const leads = await leadsRepo.list()

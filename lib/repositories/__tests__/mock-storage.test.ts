@@ -40,6 +40,22 @@ describe('createMockRepository', () => {
     expect(items[0]?.name).toBe('A')
   })
 
+  it('clears legacy auto-seeded snapshots that were saved before demo loading became explicit', async () => {
+    window.localStorage.setItem(
+      'test-legacy-seeded',
+      JSON.stringify([
+        { id: '1', name: 'A', value: 1, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+        { id: '2', name: 'Extra', value: 2, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+      ])
+    )
+    const seeded = createMockRepository<Item>('test-legacy-seeded', [
+      { id: '1', name: 'A', value: 1, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+    ])
+
+    await expect(seeded.list()).resolves.toEqual([])
+    expect(window.localStorage.getItem('test-legacy-seeded')).toBe('[]')
+  })
+
   it('can opt into auto seeding for real defaults', async () => {
     const seeded = createMockRepository<Item>(
       'test-auto-seeded',

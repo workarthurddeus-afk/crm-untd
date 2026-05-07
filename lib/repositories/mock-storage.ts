@@ -26,6 +26,11 @@ function writeStorage<T>(key: string, value: T[]): void {
   window.localStorage.setItem(key, JSON.stringify(value))
 }
 
+function removeStorage(key: string): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(key)
+}
+
 interface MockRepositoryOptions {
   autoSeed?: boolean
   resetToSeed?: boolean
@@ -43,10 +48,43 @@ export function createMockRepository<T extends Entity>(
   options: MockRepositoryOptions = {}
 ): MockRepository<T> {
   const listeners = new Set<() => void>()
+  const demoMarkerKey = `${storageKey}:demo-loaded`
+
+  function hasExplicitDemoMarker(): boolean {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(demoMarkerKey) === 'true'
+  }
+
+  function markExplicitDemoData(): void {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(demoMarkerKey, 'true')
+  }
+
+  function clearExplicitDemoMarker(): void {
+    removeStorage(demoMarkerKey)
+  }
+
+  function isLegacySeedSnapshot(items: T[]): boolean {
+    if (options.autoSeed || seed.length === 0 || items.length === 0 || hasExplicitDemoMarker()) {
+      return false
+    }
+
+    const storedIds = new Set(items.map((item) => item.id))
+    const seedIds = seed.map((item) => item.id)
+    const seedIdsFound = seedIds.filter((id) => storedIds.has(id)).length
+    return seedIdsFound > 0 && seedIdsFound === seedIds.length
+  }
 
   function getAll(): T[] {
     const stored = readStorage<T>(storageKey)
-    if (stored !== null) return stored
+    if (stored !== null) {
+      if (isLegacySeedSnapshot(stored)) {
+        writeStorage(storageKey, [])
+        clearExplicitDemoMarker()
+        return []
+      }
+      return stored
+    }
     if (options.autoSeed && seed.length > 0) {
       writeStorage(storageKey, seed)
       return [...seed]
@@ -113,14 +151,18 @@ export function createMockRepository<T extends Entity>(
     },
     async reset() {
       writeStorage(storageKey, options.resetToSeed || options.autoSeed ? seed : [])
+      if (options.resetToSeed || options.autoSeed) markExplicitDemoData()
+      else clearExplicitDemoMarker()
       listeners.forEach((l) => l())
     },
     async clear() {
       writeStorage(storageKey, [])
+      clearExplicitDemoMarker()
       listeners.forEach((l) => l())
     },
     async seedDemoData() {
       writeStorage(storageKey, seed)
+      markExplicitDemoData()
       listeners.forEach((l) => l())
     },
   }
