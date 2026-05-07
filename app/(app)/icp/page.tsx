@@ -23,8 +23,9 @@ export default function ICPPage() {
     <div>
       <PageHeader
         title="ICP & Scoring"
-        description="Quem é o seu cliente perfeito — em números."
+        description="O radar que separa oportunidade real de ruído comercial."
         actions={<ICPPageActions />}
+        className="flex-col px-4 sm:flex-row sm:px-6 lg:px-8"
       />
       {isLoading || !profile ? (
         <ICPPageSkeleton />
@@ -36,16 +37,19 @@ export default function ICPPage() {
             duration: tokens.duration.slow / 1000,
             ease: tokens.easing.enter,
           }}
-          className="mx-auto max-w-6xl px-8 py-8 space-y-6"
+          className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
         >
-          <ICPHero profile={profile} leads={leads} />
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-            <div className="space-y-6 min-w-0">
-              <ICPScoreDistribution leads={leads} profile={profile} />
-              <CriteriaList profile={profile} leads={leads} />
-            </div>
-            <div className="lg:sticky lg:top-6">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.55fr)] xl:items-start">
+            <ICPHero profile={profile} leads={leads} />
+            <div className="xl:sticky xl:top-6">
               <PersonaCard persona={profile.persona} />
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.42fr)] xl:items-start">
+            <CriteriaList profile={profile} leads={leads} />
+            <div className="xl:sticky xl:top-6">
+              <ICPScoreDistribution leads={leads} profile={profile} />
             </div>
           </div>
         </motion.div>

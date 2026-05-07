@@ -39,13 +39,21 @@ export function CriteriaList({ profile, leads }: Props) {
   }, [leads, profile])
 
   return (
-    <div>
-      <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-          Critérios de pontuação
-        </p>
-        <p className="mt-0.5 text-xs text-text-muted">
-          Cada lead recebe pontos quando bate em um critério. Total: 100 pts.
+    <section aria-labelledby="icp-criteria-title">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary">
+            Alavancas de match
+          </p>
+          <h2 id="icp-criteria-title" className="mt-1 font-display text-xl font-semibold tracking-tight text-text">
+            O que faz um lead subir no ranking
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-text-secondary">
+            Os sinais que explicam por que uma conversa merece prioridade agora.
+          </p>
+        </div>
+        <p className="text-xs font-medium text-text-secondary">
+          Modelo com 100 pts
         </p>
       </div>
 
@@ -53,7 +61,7 @@ export function CriteriaList({ profile, leads }: Props) {
         <EmptyState
           icon={Target}
           title="Nenhum critério configurado."
-          description="Configure critérios para começar a pontuar leads."
+          description="Crie sinais de fit para começar a priorizar leads."
         />
       ) : (
         <StaggerList className="space-y-3">
@@ -69,6 +77,6 @@ export function CriteriaList({ profile, leads }: Props) {
           ))}
         </StaggerList>
       )}
-    </div>
+    </section>
   )
 }
