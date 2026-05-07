@@ -11,8 +11,8 @@ describe('icpRepo', () => {
     const profile = await icpRepo.get()
 
     expect(profile.id).toBe('icp-default')
-    expect(profile.criteria).toHaveLength(7)
-    expect(profile.persona.name).toBe('Agencia local em crescimento')
+    expect(profile.criteria.length).toBeGreaterThanOrEqual(10)
+    expect(profile.persona.name).toBe('Operador de crescimento visual')
   })
 
   it('updates the profile while preserving its id', async () => {

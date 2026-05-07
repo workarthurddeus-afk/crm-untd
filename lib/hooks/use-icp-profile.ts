@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { icpRepo } from '@/lib/repositories/icp.repository'
 import type { ICPProfile } from '@/lib/types'
 
@@ -28,5 +28,13 @@ export function useICPProfile() {
     }
   }, [])
 
-  return { profile, isLoading }
+  const updateProfile = useCallback((input: Partial<ICPProfile>) => {
+    return icpRepo.update(input)
+  }, [])
+
+  const resetProfile = useCallback(() => {
+    return icpRepo.reset()
+  }, [])
+
+  return { profile, isLoading, updateProfile, resetProfile }
 }

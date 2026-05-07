@@ -2,36 +2,44 @@ import type { ICPCriterion, ICPEvaluatorType } from '@/lib/types'
 
 export const evaluatorLabel: Record<ICPEvaluatorType, string> = {
   'enum-match': 'Valor exato',
-  'array-includes': 'Está na lista',
-  'numeric-range': 'Faixa numérica',
+  'array-includes': 'Esta na lista',
+  'array-overlap': 'Cruza com a lista',
+  'text-includes': 'Texto contem sinal',
+  'numeric-range': 'Faixa numerica',
   'boolean-true': 'Verdadeiro',
-  'string-not-empty': 'Não vazio',
+  'string-not-empty': 'Nao vazio',
 }
 
 type ConfigResult =
   | { kind: 'chips'; chips: string[] }
   | { kind: 'text'; text: string }
 
+function valuesFromConfig(config: Record<string, unknown>, key = 'values'): string[] {
+  const source = config[key]
+  return Array.isArray(source)
+    ? source.map(String).filter(Boolean)
+    : []
+}
+
 export function formatCriterionConfig(criterion: ICPCriterion): ConfigResult {
   const { evaluator, config } = criterion
 
   switch (evaluator) {
-    case 'array-includes': {
-      const values = Array.isArray(config.values)
-        ? (config.values as unknown[]).map(String)
-        : []
-      return { kind: 'chips', chips: values }
+    case 'array-includes':
+    case 'array-overlap':
+      return { kind: 'chips', chips: valuesFromConfig(config) }
+
+    case 'text-includes': {
+      const chips = valuesFromConfig(config, 'keywords')
+      return { kind: 'chips', chips: chips.length > 0 ? chips : valuesFromConfig(config) }
     }
 
-    case 'enum-match': {
+    case 'enum-match':
       return { kind: 'chips', chips: [String(config.value ?? '')] }
-    }
 
     case 'numeric-range': {
-      const min =
-        typeof config.min === 'number' ? config.min : null
-      const max =
-        typeof config.max === 'number' ? config.max : null
+      const min = typeof config.min === 'number' ? config.min : null
+      const max = typeof config.max === 'number' ? config.max : null
 
       const hasMin =
         min !== null &&
@@ -45,22 +53,22 @@ export function formatCriterionConfig(criterion: ICPCriterion): ConfigResult {
       if (hasMin && hasMax) {
         return {
           kind: 'text',
-          text: `Entre ${(min as number).toLocaleString('pt-BR')} e ${(max as number).toLocaleString('pt-BR')}`,
+          text: `Entre ${min.toLocaleString('pt-BR')} e ${max.toLocaleString('pt-BR')}`,
         }
       }
       if (hasMin) {
         return {
           kind: 'text',
-          text: `≥ ${(min as number).toLocaleString('pt-BR')}`,
+          text: `>= ${min.toLocaleString('pt-BR')}`,
         }
       }
       if (hasMax) {
         return {
           kind: 'text',
-          text: `≤ ${(max as number).toLocaleString('pt-BR')}`,
+          text: `<= ${max.toLocaleString('pt-BR')}`,
         }
       }
-      return { kind: 'text', text: 'Qualquer valor numérico' }
+      return { kind: 'text', text: 'Qualquer valor numerico' }
     }
 
     case 'boolean-true':

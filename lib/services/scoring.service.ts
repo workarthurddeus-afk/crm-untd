@@ -15,6 +15,17 @@ function numericConfigValue(value: unknown, fallback: number): number {
   return typeof value === 'number' ? value : fallback
 }
 
+function configList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : []
+}
+
+function normalizeText(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(' ').toLowerCase()
+  return String(value ?? '').toLowerCase()
+}
+
 function evaluateCriterion(lead: Lead, criterion: ICPCriterion): { matchScore: number; explanation: string } {
   const value = readPath(lead, criterion.field)
   const config = criterion.config
@@ -32,13 +43,28 @@ function evaluateCriterion(lead: Lead, criterion: ICPCriterion): { matchScore: n
     }
 
     case 'array-includes': {
-      const values = Array.isArray(config.values) ? config.values : []
-      const matched = values.includes(value)
+      const values = configList(config.values)
+      const matched = values.includes(String(value))
       return {
         matchScore: matched ? 1 : 0,
         explanation: matched
           ? `${criterion.name}: ${String(value)} esta na lista`
           : `${criterion.name}: ${String(value ?? 'vazio')} fora da lista`,
+      }
+    }
+
+    case 'array-overlap': {
+      const values = configList(config.values).map((item) => item.toLowerCase())
+      const sourceValues = Array.isArray(value)
+        ? value.map((item) => String(item).toLowerCase())
+        : [String(value ?? '').toLowerCase()]
+      const matchedValues = sourceValues.filter((item) => values.includes(item))
+      const matched = matchedValues.length > 0
+      return {
+        matchScore: matched ? 1 : 0,
+        explanation: matched
+          ? `${criterion.name}: encontrou ${matchedValues.join(', ')}`
+          : `${criterion.name}: nenhum sinal encontrado`,
       }
     }
 
@@ -70,11 +96,27 @@ function evaluateCriterion(lead: Lead, criterion: ICPCriterion): { matchScore: n
         explanation: matched ? `${criterion.name}: preenchido` : `${criterion.name}: vazio`,
       }
     }
+
+    case 'text-includes': {
+      const keywords = configList(config.keywords ?? config.values).map((item) => item.toLowerCase())
+      const text = normalizeText(value)
+      const matchedKeywords = keywords.filter((keyword) => text.includes(keyword))
+      const matched = matchedKeywords.length > 0
+      return {
+        matchScore: matched ? 1 : 0,
+        explanation: matched
+          ? `${criterion.name}: encontrou ${matchedKeywords.join(', ')}`
+          : `${criterion.name}: sem palavra-chave esperada`,
+      }
+    }
   }
 }
 
 export function calculateICPScore(lead: Lead, profile: ICPProfile): ScoreBreakdown {
-  const totalWeight = profile.criteria.reduce((sum, criterion) => sum + criterion.weight, 0)
+  const totalWeight = profile.criteria.reduce(
+    (sum, criterion) => sum + Math.max(criterion.weight, 0),
+    0,
+  )
   const denominator = totalWeight > 0 ? totalWeight : 1
 
   const criteria: ICPCriterionResult[] = profile.criteria.map((criterion) => {
@@ -87,13 +129,16 @@ export function calculateICPScore(lead: Lead, profile: ICPProfile): ScoreBreakdo
       weight: criterion.weight,
       matchScore: evaluation.matchScore,
       contribution,
-      positive: evaluation.matchScore > 0,
+      positive: contribution > 0,
       explanation: evaluation.explanation,
     }
   })
 
   return {
-    total: Math.round(criteria.reduce((sum, criterion) => sum + criterion.contribution, 0)),
+    total: Math.min(
+      100,
+      Math.max(0, Math.round(criteria.reduce((sum, criterion) => sum + criterion.contribution, 0))),
+    ),
     criteria,
   }
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { calculateICPScore, recalculateAllLeads } from '../scoring.service'
+import { getPipelineICPAnalytics } from '@/lib/utils/icp-analytics'
 import type { ICPProfile, Lead } from '@/lib/types'
 
 const baseProfile: ICPProfile = {
@@ -168,6 +169,74 @@ describe('calculateICPScore', () => {
     expect(calculateICPScore(unqualified, profile).total).toBe(0)
   })
 
+  it('supports text-includes and array-overlap signals for operational ICP rules', () => {
+    const profile: ICPProfile = {
+      ...baseProfile,
+      criteria: [
+        {
+          id: 'volume',
+          name: 'Volume de criativos',
+          weight: 45,
+          field: 'pain',
+          evaluator: 'text-includes',
+          config: { keywords: ['criativos', 'volume'] },
+        },
+        {
+          id: 'tags',
+          name: 'Sinais de recorrencia',
+          weight: 55,
+          field: 'tagIds',
+          evaluator: 'array-overlap',
+          config: { values: ['recorrencia', 'meta-ads'] },
+        },
+      ],
+    }
+
+    const result = calculateICPScore(
+      makeLead({
+        pain: 'Precisa aumentar volume de criativos toda semana.',
+        tagIds: ['meta-ads'],
+      }),
+      profile,
+    )
+
+    expect(result.total).toBe(100)
+    expect(result.criteria.every((criterion) => criterion.positive)).toBe(true)
+  })
+
+  it('applies negative red-flag criteria without making totals unstable', () => {
+    const profile: ICPProfile = {
+      ...baseProfile,
+      criteria: [
+        {
+          id: 'pain',
+          name: 'Dor clara',
+          weight: 100,
+          field: 'pain',
+          evaluator: 'string-not-empty',
+          config: {},
+        },
+        {
+          id: 'red-price',
+          name: 'Red flag de preco',
+          weight: -35,
+          field: 'objections',
+          evaluator: 'array-overlap',
+          config: { values: ['preco'] },
+        },
+      ],
+    }
+
+    const result = calculateICPScore(
+      makeLead({ pain: 'Precisa escalar criativos.', objections: ['preco'] }),
+      profile,
+    )
+
+    expect(result.total).toBe(65)
+    expect(result.criteria.find((criterion) => criterion.criterionId === 'red-price')?.positive).toBe(false)
+    expect(result.criteria.find((criterion) => criterion.criterionId === 'red-price')?.contribution).toBeLessThan(0)
+  })
+
   it('returns explanations and rounded integer totals', () => {
     const profile: ICPProfile = {
       ...baseProfile,
@@ -182,6 +251,47 @@ describe('calculateICPScore', () => {
     expect(result.total).toBe(33)
     expect(Number.isInteger(result.total)).toBe(true)
     expect(result.criteria.every((criterion) => criterion.explanation.length > 0)).toBe(true)
+  })
+})
+
+describe('getPipelineICPAnalytics', () => {
+  it('summarizes pipeline fit, missing criteria, niches and top opportunity', () => {
+    const leads = [
+      makeLead({
+        id: 'lead-high',
+        company: 'Alta Fit',
+        niche: 'Agencia de social media',
+        revenuePotential: 7000,
+        pain: 'Precisa escalar criativos.',
+        tagIds: ['meta-ads'],
+      }),
+      makeLead({
+        id: 'lead-possible',
+        company: 'Possivel Fit',
+        niche: 'Agencia de trafego',
+        revenuePotential: 2000,
+        pain: 'Precisa de design.',
+        tagIds: [],
+      }),
+      makeLead({
+        id: 'lead-weak',
+        company: 'Fit Fraco',
+        niche: 'Outro',
+        revenuePotential: 800,
+        pain: '',
+        tagIds: ['baixo-fit'],
+      }),
+    ]
+
+    const analytics = getPipelineICPAnalytics(leads, baseProfile)
+
+    expect(analytics.averageScore).toBeGreaterThan(0)
+    expect(analytics.distribution.high).toBe(1)
+    expect(analytics.distribution.possible).toBe(1)
+    expect(analytics.distribution.weak).toBe(1)
+    expect(analytics.topOpportunity?.lead.id).toBe('lead-high')
+    expect(analytics.topNiches[0]?.name).toBe('Agencia de social media')
+    expect(analytics.missingCriteria[0]?.criterionId).toBeTruthy()
   })
 })
 

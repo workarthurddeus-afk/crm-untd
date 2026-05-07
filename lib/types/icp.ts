@@ -3,6 +3,8 @@ export type ICPEvaluatorType =
   | 'numeric-range'
   | 'boolean-true'
   | 'array-includes'
+  | 'array-overlap'
+  | 'text-includes'
   | 'string-not-empty'
 
 export interface ICPCriterion {
@@ -27,12 +29,21 @@ export interface ICPPersona {
   foundOnChannels: string[]
 }
 
+export interface ICPClassificationRange {
+  id: string
+  label: string
+  min: number
+  max: number
+  tone: 'success' | 'primary' | 'warning' | 'danger'
+}
+
 export interface ICPProfile {
   id: string
   name: string
   description?: string
   criteria: ICPCriterion[]
   persona: ICPPersona
+  classificationRanges?: ICPClassificationRange[]
   createdAt: string
   updatedAt: string
 }
