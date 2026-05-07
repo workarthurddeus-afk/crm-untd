@@ -69,39 +69,39 @@ const filterEmptyMessages: Record<
 > = {
   todas: {
     title: 'Sem tarefas.',
-    description: '',
+    description: 'Crie uma acao clara para tirar o plano da cabeca e colocar em movimento.',
     Icon: CheckCircle2,
     iconClass: 'text-success',
   },
   atrasadas: {
     title: 'Nenhuma tarefa atrasada. Bom trabalho.',
-    description: '',
+    description: 'O operacional esta sem pendencias vencidas neste recorte.',
     Icon: CheckCircle2,
     iconClass: 'text-success',
   },
   hoje: {
     title: 'Nada para hoje.',
-    description: '',
+    description: 'Use esse espaco para puxar uma prioridade ou manter o dia limpo.',
     Icon: Sun,
     iconClass: 'text-warning',
   },
   'esta-semana': {
     title: 'Semana limpa.',
-    description: '',
+    description: 'Nenhuma tarefa aberta aparece nos proximos dias deste filtro.',
     Icon: Calendar,
     iconClass: 'text-info',
   },
   alta: {
     title: 'Sem tarefas de alta prioridade.',
-    description: '',
+    description: 'As acoes criticas estao sob controle no recorte atual.',
     Icon: Flag,
-    iconClass: 'text-text-muted',
+    iconClass: 'text-text-secondary',
   },
   'com-lead': {
     title: 'Nenhuma tarefa vinculada a leads.',
-    description: '',
+    description: 'Quando houver follow-ups ou propostas, elas aparecem aqui com o lead conectado.',
     Icon: Link2,
-    iconClass: 'text-text-muted',
+    iconClass: 'text-text-secondary',
   },
 }
 
@@ -153,6 +153,7 @@ export function TasksList({
       <EmptyState
         icon={msg.Icon}
         title={msg.title}
+        description={msg.description}
         className="mt-8"
       />
     )

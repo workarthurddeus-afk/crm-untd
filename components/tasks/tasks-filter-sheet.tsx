@@ -80,7 +80,7 @@ function FilterSection({ title, description, children }: FilterSectionProps) {
       <div className="space-y-1">
         <h3 className="font-display text-sm font-semibold text-text">{title}</h3>
         {description && (
-          <p className="text-xs leading-relaxed text-text-muted">{description}</p>
+          <p className="text-xs leading-relaxed text-text-secondary">{description}</p>
         )}
       </div>
       {children}
@@ -109,7 +109,7 @@ function ToggleChip<T extends string>({
       onClick={() => onToggle(value)}
       aria-pressed={selected}
       className={cn(
-        'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5',
+        'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5',
         'text-xs font-medium transition-all duration-base',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         selected
@@ -150,7 +150,7 @@ function RelationButton({
       <span className="min-w-0">
         <span className="block truncate text-sm font-medium text-text">{primary}</span>
         {secondary && (
-          <span className="block truncate text-xs text-text-muted">{secondary}</span>
+          <span className="block truncate text-xs text-text-secondary">{secondary}</span>
         )}
       </span>
       <span
@@ -177,8 +177,8 @@ export function TaskActiveFilterChips({
   if (active.length === 0) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-8 pb-3">
-      <span className="text-xs font-medium uppercase tracking-[0.12em] text-text-muted">
+    <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-4 pb-3 sm:px-6 lg:px-8">
+      <span className="text-xs font-medium uppercase tracking-[0.12em] text-text-secondary">
         Filtros ativos
       </span>
       {active.map((filter) => (
@@ -187,19 +187,19 @@ export function TaskActiveFilterChips({
           type="button"
           onClick={() => onRemove(filter.id)}
           className={cn(
-            'inline-flex h-7 items-center gap-1.5 rounded-full border border-primary/25',
+            'inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/25',
             'bg-primary-muted px-2.5 text-xs font-medium text-text transition-colors duration-fast',
             'hover:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
           )}
         >
           {filter.label}
-          <X className="h-3 w-3 text-text-muted" strokeWidth={1.75} aria-hidden />
+          <X className="h-3 w-3 text-text-secondary" strokeWidth={1.75} aria-hidden />
         </button>
       ))}
       <button
         type="button"
         onClick={onReset}
-        className="text-xs font-medium text-text-muted transition-colors duration-fast hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="text-xs font-medium text-text-secondary transition-colors duration-fast hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         Limpar todos
       </button>
@@ -231,7 +231,7 @@ export function TasksFilterSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[460px] max-w-[96vw]">
+      <SheetContent className="w-[min(460px,96vw)] max-w-[96vw]">
         <SheetHeader className="bg-gradient-to-b from-surface-elevated to-surface">
           <div className="flex items-center gap-3 pr-8">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary-muted text-primary">
@@ -284,7 +284,7 @@ export function TasksFilterSheet({
           </FilterSection>
 
           <FilterSection title="Estado operacional" description="Controle o que ainda pede acao.">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {COMPLETION_OPTIONS.map((option) => (
                 <ToggleChip
                   key={option.value}
@@ -317,7 +317,7 @@ export function TasksFilterSheet({
           </FilterSection>
 
           <FilterSection title="Importancia" description="Separe foco real de backlog.">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {TASK_IMPORTANCE_OPTIONS.map((option) => (
                 <ToggleChip<TaskImportance>
                   key={option.value}
@@ -381,7 +381,7 @@ export function TasksFilterSheet({
                     aria-pressed={selected}
                     aria-label={`Filtrar cor ${option.label}`}
                     className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-md border transition-all duration-base',
+                      'flex h-11 w-11 items-center justify-center rounded-md border transition-all duration-base',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                       selected
                         ? 'border-primary/50 bg-primary-muted'
@@ -451,7 +451,7 @@ export function TasksFilterSheet({
                     key={tag}
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-xs text-text-secondary transition-colors duration-fast hover:border-primary/30 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-xs text-text-secondary transition-colors duration-fast hover:border-primary/30 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     #{tag}
                     <X className="h-3 w-3" strokeWidth={1.75} aria-hidden />

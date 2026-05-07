@@ -86,21 +86,10 @@ export function TaskRow({ task, now, leadById, isPending, onToggle, onOpen }: Pr
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-label={`Editar tarefa ${task.title}`}
-      onClick={handleRowClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          handleRowClick()
-        }
-      }}
       className={cn(
-        'group relative flex items-start gap-3 rounded-md py-3 px-4 -mx-4',
-        'cursor-pointer select-none',
+        'group relative flex items-start gap-2 rounded-lg py-2.5 pl-1 pr-3 sm:gap-3 sm:px-3',
+        'select-none',
         'hover:bg-surface-elevated/40',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         !isTransitioning && 'transition-colors duration-fast',
         isTransitioning && !reduced && [
           'transition-opacity ease-[cubic-bezier(0.4,0,0.6,1)]',
@@ -109,20 +98,18 @@ export function TaskRow({ task, now, leadById, isPending, onToggle, onOpen }: Pr
           'opacity-0 pointer-events-none',
         ],
         isTransitioning && reduced && 'opacity-0 pointer-events-none',
-        isCompleting &&
-          'ring-2 ring-success/30 shadow-[0_0_24px_rgba(52,211,153,0.3)]',
-        isReopening &&
-          'ring-1 ring-primary/30 shadow-[0_0_18px_rgba(83,50,234,0.25)]',
+        isCompleting && 'ring-2 ring-success/30 shadow-md-token',
+        isReopening && 'ring-1 ring-primary/30 shadow-sm-token',
       )}
     >
       <div
         className={cn(
-          'absolute left-0 top-3 bottom-3 w-0.5 rounded-full z-[1]',
+          'absolute bottom-3 left-0 top-3 z-[1] w-0.5 rounded-full',
           importanceAccentClass[task.importance],
         )}
       />
 
-      <div className="mt-0.5 shrink-0">
+      <div className="shrink-0">
         <TaskCheckbox
           status={displayStatus}
           title={task.title}
@@ -132,38 +119,51 @@ export function TaskRow({ task, now, leadById, isPending, onToggle, onOpen }: Pr
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span
-            className={cn(
-              'min-w-0 flex-1 text-sm font-medium leading-snug text-text',
-              isDone && 'line-through opacity-60',
-            )}
-          >
-            {task.title}
-          </span>
-
-          {duePill && !isDone && (
+        <button
+          type="button"
+          aria-label={`Editar tarefa ${task.title}`}
+          onClick={handleRowClick}
+          disabled={isTransitioning}
+          className={cn(
+            'block min-h-11 w-full rounded-md px-2 py-1.5 text-left',
+            'transition-colors duration-fast hover:bg-surface-elevated/45',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            isTransitioning && 'cursor-not-allowed',
+          )}
+        >
+          <span className="flex min-w-0 items-start gap-2">
             <span
               className={cn(
-                'flex shrink-0 items-center gap-1 text-[11px] font-mono tabular-nums',
-                dueToneTextClass[duePill.tone],
+                'min-w-0 flex-1 break-words text-sm font-medium leading-snug text-text',
+                isDone && 'line-through opacity-60',
               )}
             >
-              {duePill.tone === 'future' ? (
-                <Calendar className="h-3 w-3" />
-              ) : (
-                <Clock className="h-3 w-3" />
-              )}
-              {duePill.label}
+              {task.title}
+            </span>
+
+            {duePill && !isDone && (
+              <span
+                className={cn(
+                  'flex shrink-0 items-center gap-1 text-[0.7rem] font-medium tabular-nums',
+                  dueToneTextClass[duePill.tone],
+                )}
+              >
+                {duePill.tone === 'future' ? (
+                  <Calendar className="h-3 w-3" aria-hidden />
+                ) : (
+                  <Clock className="h-3 w-3" aria-hidden />
+                )}
+                {duePill.label}
+              </span>
+            )}
+          </span>
+
+          {task.description && (
+            <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-text-secondary">
+              {task.description}
             </span>
           )}
-        </div>
-
-        {task.description && (
-          <p className="mt-0.5 line-clamp-1 text-xs text-text-muted">
-            {task.description}
-          </p>
-        )}
+        </button>
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <Badge

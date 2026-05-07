@@ -2,8 +2,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 function SkeletonRow() {
   return (
-    <div className="flex items-start gap-3 py-3 px-4 -mx-4">
-      <Skeleton className="mt-0.5 h-5 w-5 shrink-0 rounded-full" />
+    <div className="-mx-1 flex items-start gap-2 rounded-lg py-3 pl-1 pr-3 sm:gap-3 sm:px-3">
+      <Skeleton className="h-11 w-11 shrink-0 rounded-md" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-4 w-3/4 rounded" />
         <Skeleton className="h-3 w-1/2 rounded" />
@@ -32,7 +32,7 @@ function SkeletonGroup({ count }: { count: number }) {
 
 export function TasksPageSkeleton() {
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-6 sm:px-6 lg:px-8">
       <SkeletonGroup count={2} />
       <SkeletonGroup count={3} />
       <SkeletonGroup count={2} />

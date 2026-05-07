@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
-import { Filter, ListChecks, Plus, Search } from 'lucide-react'
+import { AlertTriangle, CalendarCheck2, Filter, Flag, ListChecks, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { useTasks } from '@/lib/hooks/use-tasks'
 import { useLeads } from '@/lib/hooks/use-leads'
 import { useNotes } from '@/lib/hooks/use-notes'
-import { tasksOverdue } from '@/lib/services/tasks.service'
+import { tasksDueToday, tasksOverdue } from '@/lib/services/tasks.service'
 import { TasksFilterChips, type FilterId } from '@/components/tasks/tasks-filter-chips'
 import { TasksList } from '@/components/tasks/tasks-list'
 import { TasksPageSkeleton } from '@/components/tasks/tasks-page-skeleton'
@@ -75,7 +75,22 @@ export default function TasksPage() {
   const openCount = advancedFilteredTasks.filter(
     (t) => t.status !== 'done' && t.status !== 'cancelled',
   ).length
-  const overdueCount = tasksOverdue(advancedFilteredTasks, today).length
+  const activeTasks = advancedFilteredTasks.filter(
+    (t) => t.status !== 'done' && t.status !== 'cancelled',
+  )
+  const overdueTasks = tasksOverdue(activeTasks, today)
+  const overdueCount = overdueTasks.length
+  const todayCount = tasksDueToday(activeTasks, today).length
+  const pressureCount = new Set([
+    ...overdueTasks.map((task) => task.id),
+    ...activeTasks.filter((task) => task.importance === 'high').map((task) => task.id),
+  ]).size
+  const executionFocus =
+    overdueCount > 0
+      ? 'Recuperar pendencias'
+      : todayCount > 0
+        ? 'Fechar o plano de hoje'
+        : 'Preparar proximas acoes'
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
     [tasks, selectedTaskId],
@@ -186,10 +201,12 @@ export default function TasksPage() {
       <PageHeader
         title="Tarefas"
         description={isLoading ? undefined : description}
+        className="flex-col px-4 sm:flex-row sm:px-6 lg:px-8"
         actions={
           <Button
             variant="primary"
             onClick={openNewTask}
+            className="w-full sm:w-auto"
           >
             <Plus aria-hidden />
             Nova tarefa
@@ -200,7 +217,7 @@ export default function TasksPage() {
       {isLoading ? (
         <TasksPageSkeleton />
       ) : tasks.length === 0 ? (
-        <div className="px-8 py-6">
+        <div className="px-4 py-6 sm:px-6 lg:px-8">
           <EmptyState
             icon={ListChecks}
             title="Sem tarefas. Sem stress."
@@ -218,8 +235,62 @@ export default function TasksPage() {
         </div>
       ) : (
         <>
+          <section className="px-4 py-4 sm:px-6 lg:px-8">
+            <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr]">
+              <div className="rounded-xl border border-primary/20 bg-primary-muted/35 p-4 shadow-sm-token">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                      Foco de execucao
+                    </p>
+                    <p className="mt-2 font-display text-lg font-semibold leading-tight text-text">
+                      {executionFocus}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+                      {openCount} abertas no recorte atual
+                    </p>
+                  </div>
+                  <Flag className="h-5 w-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-surface/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-secondary">
+                      Hoje
+                    </p>
+                    <p className="mt-2 font-display text-2xl font-bold tabular-nums text-text">
+                      {todayCount}
+                    </p>
+                    <p className="mt-1 text-xs text-text-secondary">acoes com prazo no dia</p>
+                  </div>
+                  <CalendarCheck2 className="h-5 w-5 text-info" strokeWidth={1.75} aria-hidden />
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-surface/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-secondary">
+                      Pressao
+                    </p>
+                    <p className="mt-2 font-display text-2xl font-bold tabular-nums text-text">
+                      {pressureCount}
+                    </p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      atrasadas ou de alta importancia
+                    </p>
+                  </div>
+                  <AlertTriangle
+                    className={overdueCount > 0 ? 'h-5 w-5 text-danger' : 'h-5 w-5 text-warning'}
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
           <div className="sticky top-0 z-10 bg-background">
-            <div className="flex flex-col gap-3 border-b border-border-subtle px-8 py-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 border-b border-border-subtle px-4 py-3 sm:px-6 lg:px-8 xl:flex-row xl:items-center xl:justify-between">
               <div className="relative min-w-0 flex-1 xl:max-w-md">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                 <Input
@@ -235,11 +306,11 @@ export default function TasksPage() {
                   className="h-9 pl-9"
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button
                   variant="secondary"
                   onClick={() => setFiltersSheetOpen(true)}
-                  className="relative"
+                  className="relative w-full justify-center sm:w-auto"
                 >
                   <Filter aria-hidden />
                   Filtros
@@ -250,7 +321,11 @@ export default function TasksPage() {
                   )}
                 </Button>
                 {activeFiltersCount > 0 && (
-                  <Button variant="ghost" onClick={resetAdvancedFilters}>
+                  <Button
+                    variant="ghost"
+                    onClick={resetAdvancedFilters}
+                    className="w-full justify-center sm:w-auto"
+                  >
                     Limpar
                   </Button>
                 )}
@@ -268,7 +343,7 @@ export default function TasksPage() {
               onReset={resetAdvancedFilters}
             />
           </div>
-          <div className="px-8 py-4 pb-12">
+          <div className="px-4 py-4 pb-12 sm:px-6 lg:px-8">
             <TasksList
               tasks={advancedFilteredTasks}
               filter={filter}

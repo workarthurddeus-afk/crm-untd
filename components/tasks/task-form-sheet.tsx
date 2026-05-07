@@ -99,7 +99,7 @@ function TaskField({ label, htmlFor, error, hint, className, children }: FieldPr
             {error}
           </span>
         ) : hint ? (
-          <span className="text-text-muted">{hint}</span>
+          <span className="text-text-secondary">{hint}</span>
         ) : null}
       </div>
     </div>
@@ -265,7 +265,7 @@ export function TaskFormSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[560px] max-w-[96vw]">
+      <SheetContent className="w-[min(560px,96vw)] max-w-[96vw]">
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <SheetHeader className="bg-gradient-to-b from-surface-elevated to-surface">
             <div className="flex items-start gap-3 pr-8">
@@ -309,7 +309,7 @@ export function TaskFormSheet({
           <SheetBody className="space-y-6">
             {isEdit && (
               <section className="rounded-xl border border-border-subtle bg-surface/45 p-3">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {form.status === 'done' || form.status === 'cancelled' ? (
                     <Button
                       type="button"
@@ -317,7 +317,7 @@ export function TaskFormSheet({
                       size="sm"
                       onClick={() => void runQuickAction('reopen')}
                       disabled={isBusy}
-                      className="justify-start"
+                      className="min-h-11 justify-start"
                     >
                       <RotateCcw aria-hidden /> Reabrir
                     </Button>
@@ -328,7 +328,7 @@ export function TaskFormSheet({
                       size="sm"
                       onClick={() => void runQuickAction('complete')}
                       disabled={isBusy}
-                      className="justify-start"
+                      className="min-h-11 justify-start"
                     >
                       <CheckCircle2 aria-hidden /> Concluir
                     </Button>
@@ -339,7 +339,7 @@ export function TaskFormSheet({
                     size="sm"
                     onClick={() => void runQuickAction('postpone')}
                     disabled={isBusy}
-                    className="justify-start"
+                    className="min-h-11 justify-start"
                   >
                     <PauseCircle aria-hidden /> Adiar
                   </Button>
@@ -349,7 +349,7 @@ export function TaskFormSheet({
                     size="sm"
                     onClick={() => void handleScheduleOnCalendar()}
                     disabled={isBusy || Boolean(task?.relatedCalendarEventId)}
-                    className="justify-start"
+                    className="min-h-11 justify-start"
                   >
                     {task?.relatedCalendarEventId ? (
                       <>
@@ -371,7 +371,7 @@ export function TaskFormSheet({
                     size="sm"
                     onClick={() => void runQuickAction('cancel')}
                     disabled={isBusy || form.status === 'cancelled'}
-                    className="justify-start"
+                    className="min-h-11 justify-start"
                   >
                     <XCircle aria-hidden /> Cancelar
                   </Button>
@@ -381,7 +381,7 @@ export function TaskFormSheet({
                     size="sm"
                     onClick={() => void handleCopy()}
                     disabled={isBusy || (!form.title.trim() && !form.description.trim())}
-                    className="justify-start"
+                    className="min-h-11 justify-start"
                   >
                     <Clipboard aria-hidden /> Copiar contexto
                   </Button>
@@ -570,7 +570,7 @@ export function TaskFormSheet({
                       aria-label={`Cor ${option.label}`}
                       aria-pressed={active}
                       className={cn(
-                        'flex h-9 w-9 items-center justify-center rounded-md border transition-all duration-base',
+                        'flex h-11 w-11 items-center justify-center rounded-md border transition-all duration-base',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                         active
                           ? 'border-primary/50 bg-primary-muted'

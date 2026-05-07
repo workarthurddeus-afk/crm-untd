@@ -8,11 +8,11 @@ interface Props {
 
 export function TasksGroupHeader({ label, count, tone }: Props) {
   return (
-    <div className="flex items-baseline justify-between mt-8 mb-2">
+    <div className="mt-8 mb-2 flex items-baseline justify-between">
       <span
         className={cn(
           'text-xs font-semibold uppercase tracking-wider',
-          tone === 'danger' ? 'text-danger' : 'text-text-muted',
+          tone === 'danger' ? 'text-danger' : 'text-text-secondary',
         )}
       >
         {label}

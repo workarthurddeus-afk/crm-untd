@@ -31,8 +31,9 @@ export function TasksCompletedGroup({
     <div className="mt-10">
       <button
         type="button"
+        aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted hover:text-text-secondary transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm"
+        className="flex min-h-11 w-full items-center gap-2 rounded-md text-xs font-semibold uppercase tracking-wider text-text-secondary transition-colors duration-fast hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <ChevronRight
           className={cn(
@@ -41,7 +42,7 @@ export function TasksCompletedGroup({
           )}
         />
         <span className="flex-1 text-left">Concluídas</span>
-        <span className="font-mono tabular-nums text-text-muted ml-auto">
+        <span className="ml-auto font-mono tabular-nums text-text-secondary">
           {tasks.length}
         </span>
       </button>

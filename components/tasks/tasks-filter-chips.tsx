@@ -47,7 +47,7 @@ export function TasksFilterChips({ tasks, active, today, onChange }: Props) {
   ]
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto border-b border-border-subtle px-8 py-3">
+    <div className="flex items-center gap-2 overflow-x-auto border-b border-border-subtle px-4 py-3 sm:px-6 lg:px-8">
       {chips.map((chip) => {
         const isActive = active === chip.id
 
@@ -57,7 +57,7 @@ export function TasksFilterChips({ tasks, active, today, onChange }: Props) {
             type="button"
             onClick={() => onChange(chip.id)}
             className={cn(
-              'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-3',
+              'inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3',
               'text-xs font-medium',
               'transition-colors duration-fast',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
