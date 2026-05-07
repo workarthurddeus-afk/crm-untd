@@ -197,32 +197,36 @@ export function PipelineBoard({ leads, stages, onNewLead }: Props) {
       onDragCancel={onDragCancel}
     >
       <div className="border-b border-border">
-        <div className="flex items-center gap-5 px-8 py-3 text-xs">
+        <div data-pipeline-summary className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-xs sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-text-muted">
             <Users className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-            <span className="text-text-secondary">Leads abertos</span>
-            <Badge variant="secondary" className="font-mono tabular-nums">
+            <span className="text-text-secondary">Abertos</span>
+            <Badge variant="secondary" className="font-mono tabular-nums" aria-label={`${openLeads.length} leads abertos`}>
               {openLeads.length}
             </Badge>
           </div>
           <div className="flex items-center gap-2 text-text-muted">
             <TrendingUp className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-            <span className="text-text-secondary">Pipeline</span>
-            <span className="font-mono tabular-nums text-text-secondary">
+            <span className="text-text-secondary">Valor aberto</span>
+            <span className="font-mono tabular-nums text-text">
               R$ {totalRevenue.toLocaleString('pt-BR')}
             </span>
           </div>
           <div className="flex items-center gap-2 text-text-muted">
             <Trophy className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-            <span className="text-text-secondary">Ganhos este mês</span>
-            <Badge variant="success" className="font-mono tabular-nums">
+            <span className="text-text-secondary">Ganhos no mês</span>
+            <Badge variant="success" className="font-mono tabular-nums" aria-label={`${wonThisMonth} ganhos no mês`}>
               {wonThisMonth}
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto px-8 pb-8 pt-6 min-h-[calc(100vh-180px)]">
+      <div
+        data-pipeline-board-scroll
+        aria-label="Quadro do pipeline por etapas"
+        className="flex gap-4 overflow-x-auto px-4 pb-8 pt-6 min-h-[calc(100vh-180px)] sm:px-6 lg:px-8"
+      >
         {sortedStages.map((stage) => (
           <PipelineColumn
             key={stage.id}

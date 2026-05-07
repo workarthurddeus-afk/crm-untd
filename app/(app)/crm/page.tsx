@@ -16,27 +16,13 @@ export default function CRMPage() {
   const [showCreate, setShowCreate] = useState(false)
 
   const isLoading = leadsLoading || stagesLoading
-  const openLeads = leads.filter((l) => l.result === 'open')
-  const totalRevenue = openLeads.reduce((sum, l) => sum + (l.revenuePotential ?? 0), 0)
-
-  const description = (
-    <span>
-      <span className="font-display font-semibold text-text tabular-nums">
-        {openLeads.length}
-      </span>
-      <span className="text-text-muted"> leads ativos · </span>
-      <span className="font-display tabular-nums text-text-secondary">
-        R$ {totalRevenue.toLocaleString('pt-BR')}
-      </span>
-      <span className="text-text-muted"> em pipeline</span>
-    </span>
-  )
 
   return (
     <div className="flex flex-col h-full min-h-0">
       <PageHeader
         title="CRM / Pipeline"
-        description={description}
+        description="Movimente oportunidades por etapa e mantenha follow-ups visíveis."
+        className="flex-col px-4 sm:flex-row sm:px-6 lg:px-8"
         actions={
           <Button variant="primary" onClick={() => setShowCreate(true)}>
             <Plus aria-hidden />

@@ -28,7 +28,7 @@ function followUpToneClass(tone: string): string {
   if (tone === 'overdue') return 'text-danger'
   if (tone === 'today') return 'text-warning'
   if (tone === 'tomorrow') return 'text-info'
-  return 'text-text-muted'
+  return 'text-text-secondary'
 }
 
 export function PipelineCard({ lead, isOverlay = false }: Props) {
@@ -57,6 +57,10 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
     ? nextFollowUpStatus(lead.nextFollowUpAt)
     : null
 
+  function openLead() {
+    router.push(`/leads/${lead.id}`)
+  }
+
   function handleClick(e: React.MouseEvent) {
     if (wasDraggingRef.current) {
       wasDraggingRef.current = false
@@ -64,25 +68,44 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
       e.stopPropagation()
       return
     }
-    router.push(`/leads/${lead.id}`)
+    openLead()
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter') {
+      listeners?.onKeyDown?.(e)
+      return
+    }
+    e.preventDefault()
+    openLead()
   }
 
   return (
     <div
+      data-pipeline-card
       ref={isOverlay ? undefined : setNodeRef}
       style={style}
       {...(isOverlay ? {} : attributes)}
       {...(isOverlay ? {} : listeners)}
       onClick={isOverlay ? undefined : handleClick}
+      onKeyDown={isOverlay ? undefined : handleKeyDown}
+      role={isOverlay ? undefined : 'button'}
+      tabIndex={isOverlay ? undefined : 0}
+      aria-label={
+        isOverlay
+          ? undefined
+          : `Abrir lead ${lead.name}. Arraste para mover no pipeline.`
+      }
+      aria-roledescription={isOverlay ? undefined : 'Lead do pipeline'}
       className={cn(
-        'bg-surface border border-border rounded-md p-3',
+        'min-h-[112px] bg-surface border border-border rounded-md p-3',
         'transition-all duration-fast',
         'hover:border-primary/30 hover:shadow-md-token',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         isOverlay && [
           !prefersReducedMotion && 'rotate-[2deg] scale-[1.02]',
           'cursor-grabbing',
-          'shadow-[0_8px_32px_rgba(0,0,0,0.55)]',
+          'shadow-lg-token',
           'border-primary/50',
         ],
         !isOverlay && isDragging && 'opacity-30',
@@ -103,7 +126,7 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
         </span>
       </div>
 
-      <p className="text-xs text-text-muted mt-0.5 truncate">{subtitle}</p>
+      <p className="text-xs text-text-secondary mt-0.5 truncate">{subtitle}</p>
 
       <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
         <OriginTag origin={lead.origin} />
