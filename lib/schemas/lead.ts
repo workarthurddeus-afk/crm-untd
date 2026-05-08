@@ -9,6 +9,7 @@ export const leadOriginSchema = z.enum([
   'social',
   'community',
   'event',
+  'manual',
   'manual-search',
   'other',
 ])

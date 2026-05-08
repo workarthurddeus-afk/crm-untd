@@ -1,10 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error("Variáveis do Supabase não configuradas.");
-}
-
-export const supabase = createClient(supabaseUrl, supabasePublishableKey);
+export const supabase = getSupabaseBrowserClient()

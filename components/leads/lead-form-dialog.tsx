@@ -42,6 +42,7 @@ const origins: LeadOrigin[] = [
   'social',
   'community',
   'event',
+  'manual',
   'manual-search',
   'other',
 ]
@@ -54,6 +55,7 @@ const originLabels: Record<LeadOrigin, string> = {
   social: 'Rede social',
   community: 'Comunidade',
   event: 'Evento',
+  manual: 'Manual',
   'manual-search': 'Busca manual',
   other: 'Outro',
 }

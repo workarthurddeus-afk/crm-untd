@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function TesteSupabasePage() {
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function carregarLeads() {

@@ -19,6 +19,7 @@ const labels: Record<LeadOrigin, string> = {
   social: 'Rede social',
   community: 'Comunidade',
   event: 'Evento',
+  manual: 'Manual',
   'manual-search': 'Busca manual',
   other: 'Outro',
 }
@@ -32,6 +33,7 @@ const variants: Record<LeadOrigin, BadgeVariant> = {
   social: 'secondary',
   community: 'secondary',
   event: 'outline',
+  manual: 'outline',
   'manual-search': 'outline',
   other: 'outline',
 }

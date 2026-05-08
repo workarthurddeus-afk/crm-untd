@@ -56,6 +56,7 @@ export default function LeadDetailPage({ params }: PageProps) {
     if (!lead) return
     const name = lead.name
     const id = lead.id
+    const wonStageId = stages.find((item) => item.isFinalWon)?.id ?? 'stage-won'
     toast('Marcar como ganho?', {
       description: `${name} será movido para "Cliente Pagante".`,
       action: {
@@ -63,7 +64,7 @@ export default function LeadDetailPage({ params }: PageProps) {
         onClick: async () => {
           await leadsRepo.update(id, {
             result: 'won',
-            pipelineStageId: 'stage-won',
+            pipelineStageId: wonStageId,
           })
           toast.success('Lead marcado como ganho', {
             description: `${name} agora é cliente.`,
@@ -76,6 +77,7 @@ export default function LeadDetailPage({ params }: PageProps) {
   function confirmMarkLost() {
     if (!lead) return
     const id = lead.id
+    const lostStageId = stages.find((item) => item.isFinalLost)?.id ?? 'stage-lost'
     toast('Marcar como perdido?', {
       description: 'Lead será movido para "Perdido / Sem Fit".',
       action: {
@@ -83,7 +85,7 @@ export default function LeadDetailPage({ params }: PageProps) {
         onClick: async () => {
           await leadsRepo.update(id, {
             result: 'lost',
-            pipelineStageId: 'stage-lost',
+            pipelineStageId: lostStageId,
           })
           toast.success('Lead marcado como perdido', {
             description: 'Mantido no histórico.',
@@ -95,9 +97,10 @@ export default function LeadDetailPage({ params }: PageProps) {
 
   async function reopen() {
     if (!lead) return
+    const firstOpenStageId = stages.find((item) => !item.isFinalWon && !item.isFinalLost)?.id ?? 'stage-research'
     await leadsRepo.update(lead.id, {
       result: 'open',
-      pipelineStageId: 'stage-research',
+      pipelineStageId: firstOpenStageId,
     })
     toast.success('Lead reaberto')
   }

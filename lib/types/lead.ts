@@ -7,6 +7,7 @@ export type LeadOrigin =
   | 'social'
   | 'community'
   | 'event'
+  | 'manual'
   | 'manual-search'
   | 'other'
 
