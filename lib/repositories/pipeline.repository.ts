@@ -1,18 +1,13 @@
 import { pipelineStagesSeed } from '@/lib/mocks/seeds/pipeline.seed'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import {
+  fromSupabasePipelineStageRow,
+  pipelineSupabaseRepo,
+} from '@/lib/repositories/pipeline.supabase.repository'
 import type { PipelineStage } from '@/lib/types'
 
 const KEY = 'untd-pipeline-stages'
 
 type PipelineDataSource = 'local' | 'supabase'
-
-interface SupabasePipelineStageRow {
-  id: string
-  name: string
-  order_index: number
-  color?: string | null
-  is_default?: boolean | null
-}
 
 const listeners = new Set<() => void>()
 
@@ -24,16 +19,7 @@ export function resolvePipelineDataSource(value: string | undefined): PipelineDa
   return value === 'supabase' ? 'supabase' : 'local'
 }
 
-export function fromSupabasePipelineStageRow(row: SupabasePipelineStageRow): PipelineStage {
-  return {
-    id: row.id,
-    name: row.name,
-    order: row.order_index,
-    color: row.color ?? 'var(--pipe-prospect)',
-    ...(row.id === 'won' ? { isFinalWon: true } : {}),
-    ...(row.id === 'lost' ? { isFinalLost: true } : {}),
-  }
-}
+export { fromSupabasePipelineStageRow }
 
 function readLocal(): PipelineStage[] {
   if (typeof window === 'undefined') return [...pipelineStagesSeed]
@@ -57,20 +43,10 @@ function writeLocal(stages: PipelineStage[]): void {
   listeners.forEach((listener) => listener())
 }
 
-async function readSupabase(): Promise<PipelineStage[]> {
-  const { data, error } = await getSupabaseBrowserClient()
-    .from('pipeline_stages')
-    .select('*')
-    .order('order_index', { ascending: true })
-
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as SupabasePipelineStageRow[]).map(fromSupabasePipelineStageRow)
-}
-
 export const pipelineRepo = {
   async list(): Promise<PipelineStage[]> {
     if (resolvePipelineDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE) === 'supabase') {
-      return sortByOrder(await readSupabase())
+      return sortByOrder(await pipelineSupabaseRepo.list())
     }
     return sortByOrder(readLocal())
   },

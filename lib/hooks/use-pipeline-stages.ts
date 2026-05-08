@@ -7,16 +7,29 @@ import type { PipelineStage } from '@/lib/types'
 export function usePipelineStages() {
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     let active = true
 
     const load = () => {
-      void pipelineRepo.list().then((data) => {
-        if (!active) return
-        setStages(data)
-        setIsLoading(false)
-      })
+      setIsLoading(true)
+      void pipelineRepo
+        .list()
+        .then((data) => {
+          if (!active) return
+          setStages(data)
+          setError(null)
+        })
+        .catch((err: unknown) => {
+          if (!active) return
+          setStages([])
+          setError(err instanceof Error ? err : new Error(String(err)))
+        })
+        .finally(() => {
+          if (!active) return
+          setIsLoading(false)
+        })
     }
 
     load()
@@ -28,5 +41,5 @@ export function usePipelineStages() {
     }
   }, [])
 
-  return { stages, isLoading }
+  return { stages, isLoading, error }
 }

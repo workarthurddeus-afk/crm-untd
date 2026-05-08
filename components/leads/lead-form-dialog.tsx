@@ -32,6 +32,7 @@ import { leadsRepo } from '@/lib/repositories/leads.repository'
 import { usePipelineStages } from '@/lib/hooks/use-pipeline-stages'
 import type { Lead, LeadOrigin, LeadTemperature } from '@/lib/types'
 import { FormField } from './_form-field'
+import { getDefaultPipelineStageId } from './lead-form-dialog-utils'
 
 const origins: LeadOrigin[] = [
   'cold-dm',
@@ -107,8 +108,9 @@ function isoToDateInput(value: string | undefined): string {
 }
 
 export function LeadFormDialog({ open, onClose, initial }: Props) {
-  const { stages } = usePipelineStages()
+  const { stages, isLoading: stagesLoading, error: stagesError } = usePipelineStages()
   const isEdit = Boolean(initial)
+  const hasPipelineStages = stages.length > 0
 
   const {
     register,
@@ -116,6 +118,8 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
     control,
     reset,
     setFocus,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LeadInputSchemaInput, unknown, LeadInputSchema>({
     resolver: zodResolver(leadInputSchema),
@@ -170,7 +174,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
         phone: '',
         location: { city: '', country: '' },
         origin: 'cold-dm',
-        pipelineStageId: stages[0]?.id ?? '',
+        pipelineStageId: getDefaultPipelineStageId(stages),
         temperature: 'cold',
         pain: '',
         revenuePotential: undefined,
@@ -186,7 +190,31 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
     return () => window.clearTimeout(t)
   }, [open, initial, stages, reset, setFocus])
 
+  useEffect(() => {
+    if (!open || initial) return
+    const defaultStageId = getDefaultPipelineStageId(stages)
+    if (!defaultStageId || getValues('pipelineStageId')) return
+    setValue('pipelineStageId', defaultStageId, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    })
+  }, [getValues, initial, open, setValue, stages])
+
   async function onSubmit(values: LeadInputSchema) {
+    if (!hasPipelineStages) {
+      toast.error('Etapas do pipeline indisponiveis', {
+        description: 'Carregue as etapas do pipeline antes de criar o lead.',
+      })
+      return
+    }
+    if (!stages.some((stage) => stage.id === values.pipelineStageId)) {
+      toast.error('Etapa do pipeline invalida', {
+        description: 'Escolha uma etapa carregada antes de salvar.',
+      })
+      return
+    }
+
     try {
       const payload = {
         ...values,
@@ -410,7 +438,14 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
                   label="Etapa do pipeline"
                   htmlFor="lead-stage"
                   required
-                  error={errors.pipelineStageId?.message}
+                  error={
+                    errors.pipelineStageId?.message ??
+                    (stagesError
+                      ? 'Nao foi possivel carregar as etapas do pipeline.'
+                      : !stagesLoading && !hasPipelineStages
+                        ? 'Nenhuma etapa do pipeline cadastrada.'
+                        : undefined)
+                  }
                   className="md:col-span-2"
                 >
                   <Controller
@@ -420,12 +455,21 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
+                        disabled={stagesLoading || !hasPipelineStages}
                       >
                         <SelectTrigger
                           id="lead-stage"
-                          aria-invalid={!!errors.pipelineStageId}
+                          aria-invalid={!!errors.pipelineStageId || !!stagesError || (!stagesLoading && !hasPipelineStages)}
                         >
-                          <SelectValue placeholder="Selecione uma etapa..." />
+                          <SelectValue
+                            placeholder={
+                              stagesLoading
+                                ? 'Carregando etapas...'
+                                : hasPipelineStages
+                                  ? 'Selecione uma etapa...'
+                                  : 'Sem etapas disponiveis'
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {stages.map((s) => (
@@ -513,7 +557,7 @@ export function LeadFormDialog({ open, onClose, initial }: Props) {
             <Button
               type="submit"
               variant="primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || stagesLoading || !hasPipelineStages}
               className="w-full sm:w-auto sm:min-w-[128px]"
             >
               {isSubmitting && (
