@@ -3,6 +3,7 @@ import { businessMetricsUpdateSchema, settingsSchema, settingsUpdateSchema } fro
 import type { BusinessMetricsSettings, SettingsUpdateInput, UntdSettings } from '@/lib/types/settings'
 import { nowIso } from '@/lib/utils/date'
 import { createMockRepository } from './mock-storage'
+import { createSettingsSupabaseRepository, type SettingsRepository } from './settings.supabase.repository'
 
 const storageRepo = createMockRepository<UntdSettings>('untd-settings', [settingsSeed], {
   autoSeed: true,
@@ -27,28 +28,45 @@ function mergeSettings(current: UntdSettings, patch: SettingsUpdateInput): UntdS
   })
 }
 
-export const settingsRepo = {
-  async getSettings(): Promise<UntdSettings> {
-    return readSettings()
-  },
-  async updateSettings(input: SettingsUpdateInput): Promise<UntdSettings> {
-    const patch = settingsUpdateSchema.parse(input)
-    const current = await readSettings()
-    const next = mergeSettings(current, patch)
-    return storageRepo.update(current.id, next)
-  },
-  async resetSettings(): Promise<UntdSettings> {
-    await storageRepo.reset()
-    return readSettings()
-  },
-  async getBusinessMetricsSettings(): Promise<BusinessMetricsSettings> {
-    return (await readSettings()).businessMetrics
-  },
-  async updateBusinessMetrics(input: Partial<BusinessMetricsSettings>): Promise<UntdSettings> {
-    const businessMetrics = businessMetricsUpdateSchema.parse(input)
-    return this.updateSettings({ businessMetrics })
-  },
-  subscribe(listener: () => void): () => void {
-    return storageRepo.subscribe(listener)
-  },
+function createLocalSettingsRepository(): SettingsRepository {
+  return {
+    async getSettings(): Promise<UntdSettings> {
+      return readSettings()
+    },
+    async updateSettings(input: SettingsUpdateInput): Promise<UntdSettings> {
+      const patch = settingsUpdateSchema.parse(input)
+      const current = await readSettings()
+      const next = mergeSettings(current, patch)
+      return storageRepo.update(current.id, next)
+    },
+    async resetSettings(): Promise<UntdSettings> {
+      await storageRepo.reset()
+      return readSettings()
+    },
+    async getBusinessMetricsSettings(): Promise<BusinessMetricsSettings> {
+      return (await readSettings()).businessMetrics
+    },
+    async updateBusinessMetrics(input: Partial<BusinessMetricsSettings>): Promise<UntdSettings> {
+      const businessMetrics = businessMetricsUpdateSchema.parse(input)
+      return this.updateSettings({ businessMetrics })
+    },
+    subscribe(listener: () => void): () => void {
+      return storageRepo.subscribe(listener)
+    },
+  }
 }
+
+export type SettingsDataSource = 'local' | 'supabase'
+
+export function resolveSettingsDataSource(value: string | undefined): SettingsDataSource {
+  return value === 'supabase' ? 'supabase' : 'local'
+}
+
+export function createSettingsRepository(
+  dataSource: SettingsDataSource = resolveSettingsDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE)
+): SettingsRepository {
+  if (dataSource === 'supabase') return createSettingsSupabaseRepository()
+  return createLocalSettingsRepository()
+}
+
+export const settingsRepo = createSettingsRepository()
