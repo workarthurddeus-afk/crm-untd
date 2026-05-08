@@ -38,9 +38,10 @@ describe('Supabase interactions mapper', () => {
         type: 'meeting-held',
         description: 'Reuniao realizada com decisor.',
         occurredAt: '2026-05-08T15:00:00.000Z',
-      })
+      }, '9a449f5f-4e70-40fd-bb20-4e7679e4b9af')
     ).toEqual({
       lead_id: row.lead_id,
+      user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
       workspace_id: 'default',
       owner_id: 'arthur',
       type: 'meeting-held',
@@ -56,8 +57,9 @@ describe('Supabase interactions mapper', () => {
         type: 'follow-up-sent',
         description: undefined,
         occurredAt: '2026-05-09T10:00:00.000Z',
-      })
+      }, '9a449f5f-4e70-40fd-bb20-4e7679e4b9af')
     ).toEqual({
+      user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
       type: 'follow-up-sent',
       occurred_at: '2026-05-09T10:00:00.000Z',
     })

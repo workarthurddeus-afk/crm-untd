@@ -22,12 +22,19 @@ const row: SupabaseLeadRow = {
 
 function createFakeClient(
   data: SupabaseLeadRow[] = [row],
-  insertError: { message: string } | null = null
+  insertError: { message: string } | null = null,
+  user: { id: string } | null = { id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af' }
 ) {
   const calls: Array<{ method: string; payload?: unknown }> = []
 
   return {
     calls,
+    auth: {
+      getUser() {
+        calls.push({ method: 'getUser' })
+        return Promise.resolve({ data: { user }, error: null })
+      },
+    },
     from(table: string) {
       calls.push({ method: 'from', payload: table })
       return {
@@ -132,6 +139,7 @@ describe('leads Supabase repository', () => {
       payload: expect.objectContaining({
         company_name: 'Nova Co',
         owner_name: 'Novo',
+        user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
         pipeline_stage_id: 'prospecting',
         fit_score: 0,
       }),
@@ -173,5 +181,24 @@ describe('leads Supabase repository', () => {
         result: 'open',
       })
     ).rejects.toThrow('Empresa obrigatoria para criar lead.')
+  })
+
+  it('requires an authenticated user before creating leads', async () => {
+    const repo = createLeadsSupabaseRepository(createFakeClient([], null, null))
+
+    await expect(
+      repo.create({
+        name: 'Novo',
+        company: 'Nova Co',
+        niche: 'Clinica',
+        origin: 'manual',
+        pipelineStageId: 'prospecting',
+        temperature: 'cold',
+        icpScore: 0,
+        ownerId: 'arthur',
+        tagIds: [],
+        result: 'open',
+      })
+    ).rejects.toThrow('Sessao expirada. Faca login novamente.')
   })
 })

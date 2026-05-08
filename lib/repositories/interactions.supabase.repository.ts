@@ -8,6 +8,12 @@ import {
 } from './supabase/interactions.mapper'
 
 interface InteractionsSupabaseClient {
+  auth?: {
+    getUser(): PromiseLike<{
+      data: { user: { id: string } | null }
+      error: { message: string } | null
+    }>
+  }
   from(table: 'lead_interactions'): {
     select(columns?: string): {
       order(
@@ -42,6 +48,16 @@ interface InteractionsSupabaseClient {
 
 function raise(error: { message: string } | null): void {
   if (error) throw new Error(error.message)
+}
+
+async function getAuthenticatedUserId(client: InteractionsSupabaseClient): Promise<string> {
+  const { data, error } = (await client.auth?.getUser()) ?? {
+    data: { user: null },
+    error: null,
+  }
+  if (error) throw new Error(error.message)
+  if (!data.user?.id) throw new Error('Sessao expirada. Faca login novamente.')
+  return data.user.id
 }
 
 export type InteractionsRepository = {
@@ -103,9 +119,10 @@ export function createInteractionsSupabaseRepository(
     },
 
     async create(data: LeadInteractionInput): Promise<LeadInteraction> {
+      const userId = await getAuthenticatedUserId(client)
       const { data: row, error } = await client
         .from('lead_interactions')
-        .insert(toSupabaseInteractionInsert(data))
+        .insert(toSupabaseInteractionInsert(data, userId))
         .select('*')
         .single()
       raise(error)
@@ -115,9 +132,10 @@ export function createInteractionsSupabaseRepository(
     },
 
     async update(id: string, data: Partial<LeadInteraction>): Promise<LeadInteraction> {
+      const userId = await getAuthenticatedUserId(client)
       const { data: row, error } = await client
         .from('lead_interactions')
-        .update(toSupabaseInteractionUpdate(data))
+        .update(toSupabaseInteractionUpdate(data, userId))
         .eq('id', id)
         .select('*')
         .single()
@@ -128,6 +146,7 @@ export function createInteractionsSupabaseRepository(
     },
 
     async delete(id: string): Promise<void> {
+      await getAuthenticatedUserId(client)
       const { error } = await client.from('lead_interactions').delete().eq('id', id)
       raise(error)
       notify()

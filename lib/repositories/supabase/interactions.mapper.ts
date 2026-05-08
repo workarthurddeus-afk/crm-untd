@@ -19,6 +19,7 @@ const interactionTypes = new Set<InteractionType>([
 
 export interface SupabaseInteractionRow {
   id: string
+  user_id?: string | null
   lead_id: string
   workspace_id?: string | null
   owner_id?: string | null
@@ -74,9 +75,13 @@ export function fromSupabaseInteractionRow(row: SupabaseInteractionRow): LeadInt
   }
 }
 
-export function toSupabaseInteractionInsert(input: LeadInteractionInput): SupabaseInteractionInsert {
+export function toSupabaseInteractionInsert(
+  input: LeadInteractionInput,
+  userId?: string
+): SupabaseInteractionInsert {
   return {
     lead_id: requiredString(input.leadId, 'Lead obrigatorio para registrar interacao.'),
+    user_id: userId,
     workspace_id: DEFAULT_WORKSPACE_ID,
     owner_id: DEFAULT_OWNER_ID,
     type: input.type ?? DEFAULT_INTERACTION_TYPE,
@@ -87,9 +92,11 @@ export function toSupabaseInteractionInsert(input: LeadInteractionInput): Supaba
 }
 
 export function toSupabaseInteractionUpdate(
-  input: Partial<LeadInteraction>
+  input: Partial<LeadInteraction>,
+  userId?: string
 ): SupabaseInteractionUpdate {
   return removeUndefined({
+    user_id: userId,
     lead_id: input.leadId === undefined ? undefined : requiredString(input.leadId, 'Lead obrigatorio para registrar interacao.'),
     type: input.type,
     description: input.description === undefined ? undefined : nullableString(input.description),

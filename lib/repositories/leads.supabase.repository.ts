@@ -9,6 +9,12 @@ import {
 } from './supabase/leads.mapper'
 
 interface LeadsSupabaseClient {
+  auth?: {
+    getUser(): PromiseLike<{
+      data: { user: { id: string } | null }
+      error: { message: string } | null
+    }>
+  }
   from(table: 'leads'): {
     select(columns?: string): {
       order(column: string, options?: { ascending?: boolean }): PromiseLike<{ data: SupabaseLeadRow[] | null; error: { message: string } | null }>
@@ -40,6 +46,16 @@ function raise(error: { message: string } | null): void {
     throw new Error('Empresa obrigatoria para criar lead.')
   }
   throw new Error(error.message)
+}
+
+async function getAuthenticatedUserId(client: LeadsSupabaseClient): Promise<string> {
+  const { data, error } = (await client.auth?.getUser()) ?? {
+    data: { user: null },
+    error: null,
+  }
+  if (error) throw new Error(error.message)
+  if (!data.user?.id) throw new Error('Sessao expirada. Faca login novamente.')
+  return data.user.id
 }
 
 export type LeadsRepository = Repository<Lead> & {
@@ -80,9 +96,10 @@ export function createLeadsSupabaseRepository(
     },
 
     async create(data: EntityInput<Lead>): Promise<Lead> {
+      const userId = await getAuthenticatedUserId(client)
       const { data: row, error } = await client
         .from('leads')
-        .insert(toSupabaseLeadInsert(data))
+        .insert(toSupabaseLeadInsert(data, userId))
         .select('*')
         .single()
       raise(error)
@@ -92,9 +109,10 @@ export function createLeadsSupabaseRepository(
     },
 
     async update(id: string, data: Partial<Lead>): Promise<Lead> {
+      const userId = await getAuthenticatedUserId(client)
       const { data: row, error } = await client
         .from('leads')
-        .update(toSupabaseLeadUpdate(data))
+        .update(toSupabaseLeadUpdate(data, userId))
         .eq('id', id)
         .select('*')
         .single()
@@ -105,6 +123,7 @@ export function createLeadsSupabaseRepository(
     },
 
     async delete(id: string): Promise<void> {
+      await getAuthenticatedUserId(client)
       const { error } = await client.from('leads').delete().eq('id', id)
       raise(error)
       notify()

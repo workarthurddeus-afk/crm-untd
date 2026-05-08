@@ -16,11 +16,20 @@ const row: SupabaseInteractionRow = {
   updated_at: '2026-05-08T12:32:00.000Z',
 }
 
-function createFakeClient(data: SupabaseInteractionRow[] = [row]) {
+function createFakeClient(
+  data: SupabaseInteractionRow[] = [row],
+  user: { id: string } | null = { id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af' }
+) {
   const calls: Array<{ method: string; payload?: unknown }> = []
 
   return {
     calls,
+    auth: {
+      getUser() {
+        calls.push({ method: 'getUser' })
+        return Promise.resolve({ data: { user }, error: null })
+      },
+    },
     from(table: string) {
       calls.push({ method: 'from', payload: table })
       return {
@@ -135,6 +144,7 @@ describe('interactions Supabase repository', () => {
       method: 'insert',
       payload: expect.objectContaining({
         lead_id: leadId,
+        user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
         type: 'replied',
         description: 'Lead respondeu no WhatsApp.',
         occurred_at: '2026-05-08T13:00:00.000Z',
@@ -153,5 +163,18 @@ describe('interactions Supabase repository', () => {
     await repo.delete(row.id)
 
     expect(calls).toBe(1)
+  })
+
+  it('requires an authenticated user before creating interactions', async () => {
+    const repo = createInteractionsSupabaseRepository(createFakeClient([], null))
+
+    await expect(
+      repo.create({
+        leadId,
+        type: 'note',
+        description: 'Sem sessao.',
+        occurredAt: '2026-05-08T13:00:00.000Z',
+      })
+    ).rejects.toThrow('Sessao expirada. Faca login novamente.')
   })
 })

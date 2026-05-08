@@ -27,6 +27,7 @@ const leadResults = new Set<LeadResult>(['open', 'won', 'lost', 'no-response', '
 
 export interface SupabaseLeadRow {
   id: string
+  user_id?: string | null
   workspace_id?: string | null
   owner_id?: string | null
   name?: string | null
@@ -173,7 +174,10 @@ export function fromSupabaseLeadRow(row: SupabaseLeadRow): Lead {
   }
 }
 
-export function toSupabaseLeadInsert(input: LeadInput & { icpScore?: number }): SupabaseLeadInsert {
+export function toSupabaseLeadInsert(
+  input: LeadInput & { icpScore?: number },
+  userId?: string
+): SupabaseLeadInsert {
   const name = requiredString(input.name, 'Nome obrigatorio para criar lead.')
   const company = requiredString(input.company, 'Empresa obrigatoria para criar lead.')
   const role = nullableString(input.role)
@@ -184,6 +188,7 @@ export function toSupabaseLeadInsert(input: LeadInput & { icpScore?: number }): 
   const score = clampScore(input.icpScore)
 
   return removeUndefined({
+    user_id: userId,
     workspace_id: DEFAULT_WORKSPACE_ID,
     owner_id: cleanString(input.ownerId) ?? DEFAULT_OWNER_ID,
     name,
@@ -222,7 +227,10 @@ export function toSupabaseLeadInsert(input: LeadInput & { icpScore?: number }): 
   }) as SupabaseLeadInsert
 }
 
-export function toSupabaseLeadUpdate(input: Partial<Lead>): SupabaseLeadUpdate {
+export function toSupabaseLeadUpdate(
+  input: Partial<Lead>,
+  userId?: string
+): SupabaseLeadUpdate {
   const name = input.name === undefined ? undefined : nullableString(input.name)
   const company = input.company === undefined ? undefined : nullableString(input.company)
   const role = input.role === undefined ? undefined : nullableString(input.role)
@@ -233,6 +241,7 @@ export function toSupabaseLeadUpdate(input: Partial<Lead>): SupabaseLeadUpdate {
   const score = input.icpScore === undefined ? undefined : clampScore(input.icpScore)
 
   return removeUndefined({
+    user_id: userId,
     owner_id: input.ownerId === undefined ? undefined : cleanString(input.ownerId) ?? DEFAULT_OWNER_ID,
     name,
     owner_name: name,

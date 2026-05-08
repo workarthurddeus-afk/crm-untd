@@ -127,8 +127,9 @@ describe('Supabase lead mapper', () => {
         tagIds: ['clinica'],
         internalNotes: 'Entrou por indicacao.',
         result: 'open',
-      })
+      }, '9a449f5f-4e70-40fd-bb20-4e7679e4b9af')
     ).toMatchObject({
+      user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
       workspace_id: 'default',
       owner_id: 'arthur',
       name: 'Novo Lead',
@@ -157,8 +158,9 @@ describe('Supabase lead mapper', () => {
         icpScore: 101,
         location: { city: 'Sao Paulo' },
         email: undefined,
-      })
+      }, '9a449f5f-4e70-40fd-bb20-4e7679e4b9af')
     ).toEqual({
+      user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
       pipeline_stage_id: 'proposal',
       result: 'won',
       icp_score: 100,

@@ -1,15 +1,11 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { requireSupabasePublicEnv } from './env'
 
 let browserClient: SupabaseClient | null = null
 
 export function getSupabaseBrowserClient(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-
-  if (!supabaseUrl || !supabasePublishableKey) {
-    throw new Error('Variaveis do Supabase nao configuradas.')
-  }
-
-  browserClient ??= createClient(supabaseUrl, supabasePublishableKey)
+  const { url, publishableKey } = requireSupabasePublicEnv()
+  browserClient ??= createBrowserClient(url, publishableKey)
   return browserClient
 }
