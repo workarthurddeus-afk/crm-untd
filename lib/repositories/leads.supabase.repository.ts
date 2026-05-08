@@ -35,7 +35,11 @@ interface LeadsSupabaseClient {
 }
 
 function raise(error: { message: string } | null): void {
-  if (error) throw new Error(error.message)
+  if (!error) return
+  if (error.message.includes('company_name')) {
+    throw new Error('Empresa obrigatoria para criar lead.')
+  }
+  throw new Error(error.message)
 }
 
 export type LeadsRepository = Repository<Lead> & {

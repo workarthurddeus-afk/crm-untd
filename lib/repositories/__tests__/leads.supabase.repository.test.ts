@@ -7,7 +7,7 @@ const row: SupabaseLeadRow = {
   workspace_id: 'default',
   owner_id: 'arthur',
   name: 'Lead Supabase',
-  company: 'Supabase Co',
+  company_name: 'Supabase Co',
   niche: 'Agencia',
   origin: 'manual',
   pipeline_stage_id: 'prospecting',
@@ -20,7 +20,10 @@ const row: SupabaseLeadRow = {
   updated_at: '2026-05-01T00:00:00.000Z',
 }
 
-function createFakeClient(data: SupabaseLeadRow[] = [row]) {
+function createFakeClient(
+  data: SupabaseLeadRow[] = [row],
+  insertError: { message: string } | null = null
+) {
   const calls: Array<{ method: string; payload?: unknown }> = []
 
   return {
@@ -56,7 +59,10 @@ function createFakeClient(data: SupabaseLeadRow[] = [row]) {
               return {
                 single() {
                   calls.push({ method: 'single' })
-                  return Promise.resolve({ data: { ...row, ...(Array.isArray(payload) ? payload[0] : payload) }, error: null })
+                  return Promise.resolve({
+                    data: insertError ? null : { ...row, ...(Array.isArray(payload) ? payload[0] : payload) },
+                    error: insertError,
+                  })
                 },
               }
             },
@@ -124,9 +130,10 @@ describe('leads Supabase repository', () => {
     expect(fake.calls).toContainEqual({
       method: 'insert',
       payload: expect.objectContaining({
-        company: 'Nova Co',
+        company_name: 'Nova Co',
+        owner_name: 'Novo',
         pipeline_stage_id: 'prospecting',
-        icp_score: 0,
+        fit_score: 0,
       }),
     })
   })
@@ -142,5 +149,29 @@ describe('leads Supabase repository', () => {
     await repo.delete(row.id)
 
     expect(calls).toBe(1)
+  })
+
+  it('translates company_name constraint errors into a friendly message', async () => {
+    const repo = createLeadsSupabaseRepository(
+      createFakeClient([], {
+        message:
+          'null value in column "company_name" of relation "leads" violates not-null constraint',
+      })
+    )
+
+    await expect(
+      repo.create({
+        name: 'Novo',
+        company: 'Nova Co',
+        niche: 'Clinica',
+        origin: 'manual',
+        pipelineStageId: 'prospecting',
+        temperature: 'cold',
+        icpScore: 0,
+        ownerId: 'arthur',
+        tagIds: [],
+        result: 'open',
+      })
+    ).rejects.toThrow('Empresa obrigatoria para criar lead.')
   })
 })

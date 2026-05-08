@@ -83,6 +83,12 @@ function nullableString(value: string | null | undefined): string | null {
   return cleanString(value) ?? null
 }
 
+function requiredString(value: string | null | undefined, message: string): string {
+  const clean = cleanString(value)
+  if (!clean) throw new Error(message)
+  return clean
+}
+
 function removeUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as Partial<T>
 }
@@ -168,25 +174,43 @@ export function fromSupabaseLeadRow(row: SupabaseLeadRow): Lead {
 }
 
 export function toSupabaseLeadInsert(input: LeadInput & { icpScore?: number }): SupabaseLeadInsert {
+  const name = requiredString(input.name, 'Nome obrigatorio para criar lead.')
+  const company = requiredString(input.company, 'Empresa obrigatoria para criar lead.')
+  const role = nullableString(input.role)
+  const linkedin = nullableString(input.linkedin)
+  const email = nullableString(input.email)
+  const phone = nullableString(input.phone)
+  const pain = nullableString(input.pain)
+  const score = clampScore(input.icpScore)
+
   return removeUndefined({
     workspace_id: DEFAULT_WORKSPACE_ID,
     owner_id: cleanString(input.ownerId) ?? DEFAULT_OWNER_ID,
-    name: nullableString(input.name),
-    company: nullableString(input.company),
-    role: nullableString(input.role),
+    name,
+    owner_name: name,
+    company,
+    company_name: company,
+    role,
+    owner_role: role,
     niche: nullableString(input.niche),
     website: nullableString(input.website),
     instagram: nullableString(input.instagram),
-    linkedin: nullableString(input.linkedin),
-    email: nullableString(input.email),
-    phone: nullableString(input.phone),
+    linkedin,
+    owner_linkedin: linkedin,
+    email,
+    commercial_email: email,
+    phone,
+    commercial_phone: phone,
+    whatsapp: phone,
     city: nullableString(input.location?.city),
     country: cleanString(input.location?.country) ?? DEFAULT_COUNTRY,
     origin: input.origin ?? DEFAULT_ORIGIN,
     pipeline_stage_id: cleanString(input.pipelineStageId) ?? DEFAULT_PIPELINE_STAGE_ID,
     temperature: input.temperature ?? DEFAULT_TEMPERATURE,
-    icp_score: clampScore(input.icpScore),
-    pain: nullableString(input.pain),
+    icp_score: score,
+    fit_score: score,
+    pain,
+    visual_problems: pain,
     revenue_potential: input.revenuePotential ?? null,
     objections: input.objections ?? [],
     first_contact_at: nullableString(input.firstContactAt),
@@ -199,24 +223,42 @@ export function toSupabaseLeadInsert(input: LeadInput & { icpScore?: number }): 
 }
 
 export function toSupabaseLeadUpdate(input: Partial<Lead>): SupabaseLeadUpdate {
+  const name = input.name === undefined ? undefined : nullableString(input.name)
+  const company = input.company === undefined ? undefined : nullableString(input.company)
+  const role = input.role === undefined ? undefined : nullableString(input.role)
+  const linkedin = input.linkedin === undefined ? undefined : nullableString(input.linkedin)
+  const email = input.email === undefined ? undefined : nullableString(input.email)
+  const phone = input.phone === undefined ? undefined : nullableString(input.phone)
+  const pain = input.pain === undefined ? undefined : nullableString(input.pain)
+  const score = input.icpScore === undefined ? undefined : clampScore(input.icpScore)
+
   return removeUndefined({
     owner_id: input.ownerId === undefined ? undefined : cleanString(input.ownerId) ?? DEFAULT_OWNER_ID,
-    name: input.name === undefined ? undefined : nullableString(input.name),
-    company: input.company === undefined ? undefined : nullableString(input.company),
-    role: input.role === undefined ? undefined : nullableString(input.role),
+    name,
+    owner_name: name,
+    company,
+    company_name: company,
+    role,
+    owner_role: role,
     niche: input.niche === undefined ? undefined : nullableString(input.niche),
     website: input.website === undefined ? undefined : nullableString(input.website),
     instagram: input.instagram === undefined ? undefined : nullableString(input.instagram),
-    linkedin: input.linkedin === undefined ? undefined : nullableString(input.linkedin),
-    email: input.email === undefined ? undefined : nullableString(input.email),
-    phone: input.phone === undefined ? undefined : nullableString(input.phone),
+    linkedin,
+    owner_linkedin: linkedin,
+    email,
+    commercial_email: email,
+    phone,
+    commercial_phone: phone,
+    whatsapp: phone,
     city: input.location?.city === undefined ? undefined : nullableString(input.location.city),
     country: input.location?.country === undefined ? undefined : cleanString(input.location.country) ?? DEFAULT_COUNTRY,
     origin: input.origin,
     pipeline_stage_id: input.pipelineStageId === undefined ? undefined : cleanString(input.pipelineStageId) ?? DEFAULT_PIPELINE_STAGE_ID,
     temperature: input.temperature,
-    icp_score: input.icpScore === undefined ? undefined : clampScore(input.icpScore),
-    pain: input.pain === undefined ? undefined : nullableString(input.pain),
+    icp_score: score,
+    fit_score: score,
+    pain,
+    visual_problems: pain,
     revenue_potential: input.revenuePotential,
     objections: input.objections,
     first_contact_at: input.firstContactAt === undefined ? undefined : nullableString(input.firstContactAt),

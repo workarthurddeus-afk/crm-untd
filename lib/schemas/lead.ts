@@ -18,14 +18,14 @@ export const leadTemperatureSchema = z.enum(['cold', 'warm', 'hot'])
 export const leadResultSchema = z.enum(['open', 'won', 'lost', 'no-response', 'no-fit'])
 
 export const leadInputSchema = z.object({
-  name: z.string().min(1, 'Nome obrigatório').max(120),
-  company: z.string().min(1, 'Empresa obrigatória').max(120),
+  name: z.string().trim().min(1, 'Nome obrigatorio').max(120),
+  company: z.string().trim().min(1, 'Empresa obrigatoria').max(120),
   role: z.string().max(120).optional(),
-  niche: z.string().min(1, 'Nicho obrigatório').max(120),
-  website: z.string().url('URL inválida').optional().or(z.literal('')),
+  niche: z.string().trim().min(1, 'Nicho obrigatorio').max(120),
+  website: z.string().url('URL invalida').optional().or(z.literal('')),
   instagram: z.string().max(120).optional(),
   linkedin: z.string().max(200).optional(),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().email('Email invalido').optional().or(z.literal('')),
   phone: z.string().max(40).optional(),
   location: z
     .object({
@@ -34,7 +34,7 @@ export const leadInputSchema = z.object({
     })
     .optional(),
   origin: leadOriginSchema,
-  pipelineStageId: z.string().min(1),
+  pipelineStageId: z.string().trim().min(1, 'Etapa do pipeline obrigatoria'),
   temperature: leadTemperatureSchema,
   pain: z.string().max(500).optional(),
   revenuePotential: z.number().nonnegative().optional(),
