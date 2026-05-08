@@ -22,7 +22,7 @@ export function useInteractions(leadId: string | null) {
     let active = true
 
     const load = () => {
-      void interactionsRepo.list({ leadId }).then((data) => {
+      void interactionsRepo.getByLeadId(leadId).then((data) => {
         if (!active) return
         setInteractions(sortNewestFirst(data))
         setIsLoading(false)
