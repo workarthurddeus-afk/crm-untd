@@ -202,4 +202,29 @@ export function createNotesRepository(
   return createLocalNotesRepository()
 }
 
-export const notesRepo = createNotesRepository()
+const localNotesRepo = createLocalNotesRepository()
+let supabaseNotesRepo: NotesRepository | null = null
+
+function getActiveNotesRepository(): NotesRepository {
+  if (resolveNotesDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE) !== 'supabase') {
+    return localNotesRepo
+  }
+
+  supabaseNotesRepo ??= createNotesSupabaseRepository()
+  return supabaseNotesRepo
+}
+
+export const notesRepo = new Proxy({} as NotesRepository, {
+  get(_target, property: keyof NotesRepository) {
+    if (property === 'subscribe') {
+      return (listener: () => void) => getActiveNotesRepository().subscribe(listener)
+    }
+
+    return async (...args: unknown[]) => {
+      const repository = getActiveNotesRepository()
+      const value = repository[property]
+      if (typeof value !== 'function') return value
+      return (value as (...items: unknown[]) => unknown).apply(repository, args)
+    }
+  },
+})

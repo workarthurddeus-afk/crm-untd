@@ -75,4 +75,29 @@ export function createNoteFoldersRepository(
   return createLocalNoteFoldersRepository()
 }
 
-export const noteFoldersRepo = createNoteFoldersRepository()
+const localNoteFoldersRepo = createLocalNoteFoldersRepository()
+let supabaseNoteFoldersRepo: NoteFoldersRepository | null = null
+
+function getActiveNoteFoldersRepository(): NoteFoldersRepository {
+  if (resolveNoteFoldersDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE) !== 'supabase') {
+    return localNoteFoldersRepo
+  }
+
+  supabaseNoteFoldersRepo ??= createNoteFoldersSupabaseRepository()
+  return supabaseNoteFoldersRepo
+}
+
+export const noteFoldersRepo = new Proxy({} as NoteFoldersRepository, {
+  get(_target, property: keyof NoteFoldersRepository) {
+    if (property === 'subscribe') {
+      return (listener: () => void) => getActiveNoteFoldersRepository().subscribe(listener)
+    }
+
+    return async (...args: unknown[]) => {
+      const repository = getActiveNoteFoldersRepository()
+      const value = repository[property]
+      if (typeof value !== 'function') return value
+      return (value as (...items: unknown[]) => unknown).apply(repository, args)
+    }
+  },
+})
