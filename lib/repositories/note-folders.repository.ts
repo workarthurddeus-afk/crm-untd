@@ -1,10 +1,15 @@
 import { noteFoldersSeed } from '@/lib/mocks/seeds/note-folders.seed'
 import type { NoteFolder, NoteFolderInput } from '@/lib/types'
 import { createMockRepository } from './mock-storage'
+import {
+  createNoteFoldersSupabaseRepository,
+  type NoteFoldersRepository,
+} from './note-folders.supabase.repository'
 
 const storageRepo = createMockRepository<NoteFolder>('untd-note-folders', noteFoldersSeed)
 
-export const noteFoldersRepo = {
+function createLocalNoteFoldersRepository(): NoteFoldersRepository {
+  return {
   async listFolders(filters?: Partial<NoteFolder>): Promise<NoteFolder[]> {
     const folders = await storageRepo.list()
     return folders
@@ -55,3 +60,19 @@ export const noteFoldersRepo = {
     return storageRepo.subscribe(listener)
   },
 }
+}
+
+export type NoteFoldersDataSource = 'local' | 'supabase'
+
+export function resolveNoteFoldersDataSource(value: string | undefined): NoteFoldersDataSource {
+  return value === 'supabase' ? 'supabase' : 'local'
+}
+
+export function createNoteFoldersRepository(
+  dataSource: NoteFoldersDataSource = resolveNoteFoldersDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE)
+): NoteFoldersRepository {
+  if (dataSource === 'supabase') return createNoteFoldersSupabaseRepository()
+  return createLocalNoteFoldersRepository()
+}
+
+export const noteFoldersRepo = createNoteFoldersRepository()

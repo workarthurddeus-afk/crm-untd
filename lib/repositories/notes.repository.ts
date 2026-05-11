@@ -2,6 +2,7 @@ import { notesSeed } from '@/lib/mocks/seeds/notes.seed'
 import type { Note, NoteInput } from '@/lib/types'
 import { generateExcerpt, filterNotes as applyNoteFilters, normalizeNote, normalizeTag, sortNotes, type NoteFilters, type NoteSort } from '@/lib/utils/notes'
 import { createMockRepository } from './mock-storage'
+import { createNotesSupabaseRepository, type NotesRepository } from './notes.supabase.repository'
 
 const storageRepo = createMockRepository<Note>('untd-notes', notesSeed.map(normalizeNote))
 
@@ -80,7 +81,8 @@ async function allNotes(): Promise<Note[]> {
   return (await storageRepo.list()).map(normalizeNote)
 }
 
-export const notesRepo = {
+function createLocalNotesRepository(): NotesRepository {
+  return {
   async list(filters?: Partial<Note>): Promise<Note[]> {
     return this.listNotes(filters as NoteFilters)
   },
@@ -185,3 +187,19 @@ export const notesRepo = {
     return storageRepo.subscribe(listener)
   },
 }
+}
+
+export type NotesDataSource = 'local' | 'supabase'
+
+export function resolveNotesDataSource(value: string | undefined): NotesDataSource {
+  return value === 'supabase' ? 'supabase' : 'local'
+}
+
+export function createNotesRepository(
+  dataSource: NotesDataSource = resolveNotesDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE)
+): NotesRepository {
+  if (dataSource === 'supabase') return createNotesSupabaseRepository()
+  return createLocalNotesRepository()
+}
+
+export const notesRepo = createNotesRepository()
