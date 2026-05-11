@@ -18,17 +18,16 @@ import {
   parseDate,
 } from '@/lib/utils/date-range'
 import { createMockRepository } from './mock-storage'
+import {
+  createCalendarEventsSupabaseRepository,
+  type CalendarEventsRepository,
+  type CreateCalendarEventInput,
+} from './calendar-events.supabase.repository'
 
 const storageRepo = createMockRepository<CalendarEvent>(
   'untd-calendar-events',
   calendarEventsSeed.map(normalizeCalendarEvent)
 )
-
-type CreateCalendarEventInput = Partial<CalendarEventInput> &
-  Pick<
-    CalendarEventInput,
-    'title' | 'startAt' | 'allDay' | 'type' | 'status' | 'priority' | 'importance' | 'color' | 'attendees' | 'tags' | 'source' | 'isReminder'
-  >
 
 async function allEvents(): Promise<CalendarEvent[]> {
   return (await storageRepo.list()).map(normalizeCalendarEvent)
@@ -84,7 +83,8 @@ function completeForUpdate(current: CalendarEvent, patch: Partial<CalendarEvent>
   }
 }
 
-export const calendarEventsRepo = {
+function createLocalCalendarEventsRepository(): CalendarEventsRepository {
+  return {
   async list(filters?: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
     return this.listEvents(filters as CalendarFilters)
   },
@@ -197,3 +197,44 @@ export const calendarEventsRepo = {
     return storageRepo.subscribe(listener)
   },
 }
+}
+
+export type CalendarEventsDataSource = 'local' | 'supabase'
+
+export function resolveCalendarEventsDataSource(value: string | undefined): CalendarEventsDataSource {
+  return value === 'supabase' ? 'supabase' : 'local'
+}
+
+export function createCalendarEventsRepository(
+  dataSource: CalendarEventsDataSource = resolveCalendarEventsDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE)
+): CalendarEventsRepository {
+  if (dataSource === 'supabase') return createCalendarEventsSupabaseRepository()
+  return localCalendarEventsRepo
+}
+
+const localCalendarEventsRepo = createLocalCalendarEventsRepository()
+let supabaseCalendarEventsRepo: CalendarEventsRepository | null = null
+
+function getActiveCalendarEventsRepository(): CalendarEventsRepository {
+  if (resolveCalendarEventsDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE) !== 'supabase') {
+    return localCalendarEventsRepo
+  }
+
+  supabaseCalendarEventsRepo ??= createCalendarEventsSupabaseRepository()
+  return supabaseCalendarEventsRepo
+}
+
+export const calendarEventsRepo = new Proxy({} as CalendarEventsRepository, {
+  get(_target, property: keyof CalendarEventsRepository) {
+    if (property === 'subscribe') {
+      return (listener: () => void) => getActiveCalendarEventsRepository().subscribe(listener)
+    }
+
+    return async (...args: unknown[]) => {
+      const repository = getActiveCalendarEventsRepository()
+      const value = repository[property]
+      if (typeof value !== 'function') return value
+      return (value as (...items: unknown[]) => unknown).apply(repository, args)
+    }
+  },
+})
