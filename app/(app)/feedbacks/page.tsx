@@ -208,6 +208,11 @@ export default function FeedbacksPage() {
     })
   }
 
+  async function deleteFeedback(id: string): Promise<void> {
+    await actions.deleteFeedback(id)
+    setSelectedFeedbackId((current) => (current === id ? null : current))
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6 px-6 py-8 lg:px-8">
       <header className="rounded-2xl border border-border-subtle bg-[radial-gradient(circle_at_top_left,rgba(83,50,234,0.20),transparent_34%),linear-gradient(135deg,rgba(24,22,35,0.92),rgba(15,14,23,0.94))] p-5 shadow-md-token">
@@ -359,6 +364,7 @@ export default function FeedbacksPage() {
         onReopen={actions.reopenFeedback}
         onArchive={actions.archiveFeedback}
         onRestore={actions.unarchiveFeedback}
+        onDelete={deleteFeedback}
         onPin={actions.pinFeedback}
         onUnpin={actions.unpinFeedback}
         onConvertToNote={convertToNote}

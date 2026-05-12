@@ -87,6 +87,10 @@ export async function restoreNote(id: string): Promise<Note> {
   return notesRepo.unarchiveNote(id)
 }
 
+export async function deleteNotePermanently(id: string): Promise<void> {
+  await notesRepo.delete(id)
+}
+
 export async function getNotesForLead(leadId: string): Promise<Note[]> {
   return notesRepo.getNotesByLeadId(leadId)
 }

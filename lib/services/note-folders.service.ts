@@ -55,6 +55,12 @@ export async function restoreNoteFolder(id: string): Promise<NoteFolder> {
   return noteFoldersRepo.restoreFolder(id)
 }
 
+export async function deleteNoteFolder(id: string): Promise<void> {
+  const notes = await notesRepo.getNotesByFolder(id)
+  await Promise.all(notes.map((note) => notesRepo.moveNoteToFolder(note.id, null)))
+  await noteFoldersRepo.deleteFolder(id)
+}
+
 function normalizeFolderName(name: string): string {
   return name
     .normalize('NFD')

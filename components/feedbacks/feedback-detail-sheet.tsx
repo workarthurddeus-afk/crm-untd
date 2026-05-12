@@ -12,11 +12,13 @@ import {
   PinOff,
   RotateCcw,
   Sparkles,
+  Trash2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
@@ -52,6 +54,7 @@ interface Props {
   onReopen: (id: string) => Promise<Feedback>
   onArchive: (id: string) => Promise<Feedback>
   onRestore: (id: string) => Promise<Feedback>
+  onDelete: (id: string) => Promise<void>
   onPin: (id: string) => Promise<Feedback>
   onUnpin: (id: string) => Promise<Feedback>
   onConvertToNote: (feedback: Feedback) => Promise<Feedback>
@@ -91,12 +94,14 @@ export function FeedbackDetailSheet({
   onReopen,
   onArchive,
   onRestore,
+  onDelete,
   onPin,
   onUnpin,
   onConvertToNote,
   onConvertToTask,
 }: Props) {
   const [busyAction, setBusyAction] = useState<BusyAction>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!feedback) {
     return <Sheet open={open} onOpenChange={onOpenChange} />
@@ -142,6 +147,15 @@ export function FeedbackDetailSheet({
     } finally {
       setBusyAction(null)
     }
+  }
+
+  async function handleDelete() {
+    if (!feedback) return
+    await onDelete(feedback.id)
+    toast.success('Feedback excluido permanentemente', {
+      description: feedback.title,
+    })
+    onOpenChange(false)
   }
 
   return (
@@ -291,8 +305,24 @@ export function FeedbackDetailSheet({
               )}
               {feedback.relatedTaskId ? 'Tarefa criada' : 'Virar tarefa'}
             </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteOpen(true)}
+              disabled={Boolean(busyAction)}
+            >
+              <Trash2 aria-hidden /> Excluir
+            </Button>
           </div>
         </SheetFooter>
+        <DestructiveConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title="Excluir feedback permanentemente?"
+          description="Essa acao remove o feedback da central de aprendizado. Notas e tarefas vinculadas nao serao apagadas automaticamente."
+          confirmLabel="Excluir feedback"
+          confirmationText="EXCLUIR"
+          onConfirm={handleDelete}
+        />
       </SheetContent>
     </Sheet>
   )

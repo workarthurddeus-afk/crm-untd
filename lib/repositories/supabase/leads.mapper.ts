@@ -64,6 +64,7 @@ export interface SupabaseLeadRow {
   internal_notes?: string | null
   result?: string | null
   status?: string | null
+  archived_at?: string | null
   visual_quality_score?: number | null
   visual_problems?: string | null
   why_good_lead?: string | null
@@ -169,6 +170,7 @@ export function fromSupabaseLeadRow(row: SupabaseLeadRow): Lead {
     tagIds: normalizeStringArray(row.tag_ids),
     internalNotes: composeLegacyNotes(row),
     result: normalizeResult(row.result),
+    archivedAt: cleanString(row.archived_at) ?? null,
     createdAt,
     updatedAt: row.updated_at ?? createdAt,
   }
@@ -224,6 +226,7 @@ export function toSupabaseLeadInsert(
     tag_ids: input.tagIds ?? [],
     internal_notes: nullableString(input.internalNotes),
     result: input.result ?? DEFAULT_RESULT,
+    archived_at: input.archivedAt ?? null,
   }) as SupabaseLeadInsert
 }
 
@@ -276,5 +279,6 @@ export function toSupabaseLeadUpdate(
     tag_ids: input.tagIds,
     internal_notes: input.internalNotes === undefined ? undefined : nullableString(input.internalNotes),
     result: input.result,
+    archived_at: input.archivedAt === undefined ? undefined : input.archivedAt ?? null,
   })
 }

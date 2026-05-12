@@ -5,6 +5,7 @@ import { feedbacksRepo } from '@/lib/repositories/feedbacks.repository'
 import {
   archiveFeedback,
   createFeedback,
+  deleteFeedbackPermanently,
   getFeedbackDashboardSummary,
   getFeedbackInbox,
   getFeedbackStats,
@@ -33,6 +34,7 @@ function useFeedbackActions() {
       updateFeedback,
       archiveFeedback,
       unarchiveFeedback,
+      deleteFeedback: deleteFeedbackPermanently,
       resolveFeedback,
       reopenFeedback,
       pinFeedback,

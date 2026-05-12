@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { interactionsRepo } from '@/lib/repositories/interaction.repository'
 import type { LeadInteraction } from '@/lib/types'
 
@@ -13,6 +13,8 @@ function sortNewestFirst(interactions: LeadInteraction[]): LeadInteraction[] {
 export function useInteractions(leadId: string | null) {
   const [interactions, setInteractions] = useState<LeadInteraction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const deleteInteraction = useCallback((id: string) => interactionsRepo.delete(id), [])
 
   useEffect(() => {
     if (!leadId) {
@@ -41,5 +43,8 @@ export function useInteractions(leadId: string | null) {
   return {
     interactions: leadId ? interactions : [],
     isLoading: leadId ? isLoading : false,
+    actions: {
+      deleteInteraction,
+    },
   }
 }

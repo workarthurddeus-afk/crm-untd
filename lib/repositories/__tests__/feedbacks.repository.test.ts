@@ -77,6 +77,14 @@ describe('feedbacksRepo', () => {
     await expect(feedbacksRepo.unpinFeedback(target.id)).resolves.toMatchObject({ isPinned: false })
   })
 
+  it('hard deletes feedback permanently', async () => {
+    const target = (await feedbacksRepo.listFeedbacks())[0]!
+
+    await feedbacksRepo.deleteFeedback(target.id)
+
+    await expect(feedbacksRepo.getFeedbackById(target.id)).resolves.toBeNull()
+  })
+
   it('filters by type, status, impact, frequency, sentiment and priority', async () => {
     const filtered = await feedbacksRepo.filterFeedbacks({
       type: 'feature_request',

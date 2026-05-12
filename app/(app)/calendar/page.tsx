@@ -23,6 +23,7 @@ import { MonthCalendarGrid } from '@/components/calendar/month-calendar-grid'
 import { DayAgendaSidebar } from '@/components/calendar/day-agenda-sidebar'
 import { UpcomingEventsPanel } from '@/components/calendar/upcoming-events-panel'
 import { EventCreateDialog } from '@/components/calendar/event-create-dialog'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import type {
   CalendarEvent,
   CalendarEventInput,
@@ -79,6 +80,7 @@ export default function CalendarPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogAsReminder, setDialogAsReminder] = useState(false)
   const [dialogInitialDate, setDialogInitialDate] = useState<Date>(() => today)
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null)
 
   // Single all-events fetch with stable filters reference; we filter on
   // client to keep the hook from refetching as filters/search change.
@@ -246,6 +248,18 @@ export default function CalendarPage() {
     [actions]
   )
 
+  const handleDeleteEvent = useCallback(async () => {
+    if (!eventToDelete) return
+    await actions.deleteEvent(eventToDelete.id)
+    if (selectedEventId === eventToDelete.id) {
+      setSelectedEventId(null)
+    }
+    toast.success('Evento excluido permanentemente', {
+      description: eventToDelete.title,
+    })
+    setEventToDelete(null)
+  }, [actions, eventToDelete, selectedEventId])
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <CalendarPageHeader
@@ -300,6 +314,7 @@ export default function CalendarPage() {
               onComplete={handleComplete}
               onUncomplete={handleUncomplete}
               onCancel={handleCancel}
+              onDelete={setEventToDelete}
               onAdd={() => openCreateDialog(false, selectedDay)}
               today={today}
             />
@@ -328,6 +343,16 @@ export default function CalendarPage() {
         initialDate={dialogInitialDate}
         asReminder={dialogAsReminder}
         onSubmit={handleCreateEvent}
+      />
+      <DestructiveConfirmDialog
+        open={Boolean(eventToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setEventToDelete(null)
+        }}
+        title="Excluir evento?"
+        description="Essa acao remove o evento do calendario. Se ele estiver ligado a uma tarefa, o vinculo sera limpo para evitar referencia quebrada."
+        confirmLabel="Excluir evento"
+        onConfirm={handleDeleteEvent}
       />
     </div>
   )

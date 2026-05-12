@@ -12,6 +12,7 @@ import {
   ListChecks,
   MapPin,
   StickyNote,
+  Trash2,
   X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +34,7 @@ interface Props {
   onComplete: () => Promise<void> | void
   onUncomplete: () => Promise<void> | void
   onCancel: () => Promise<void> | void
+  onDelete: () => void
   today: Date
 }
 
@@ -43,6 +45,7 @@ export function DayAgendaItem({
   onComplete,
   onUncomplete,
   onCancel,
+  onDelete,
   today,
 }: Props) {
   const tokens = getCalendarColorTokens(event.color)
@@ -208,21 +211,36 @@ export function DayAgendaItem({
           </div>
         </div>
 
-        {!completed && !cancelled && (
+        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-fast group-hover:opacity-100 focus-within:opacity-100">
+          {!completed && !cancelled && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Cancelar evento"
+              onClick={(e) => {
+                e.stopPropagation()
+                void guard(onCancel)
+              }}
+              disabled={busy}
+              className="h-7 w-7"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Cancelar evento"
+            aria-label="Excluir evento"
             onClick={(e) => {
               e.stopPropagation()
-              void guard(onCancel)
+              onDelete()
             }}
             disabled={busy}
-            className="h-7 w-7 opacity-0 transition-opacity duration-fast group-hover:opacity-100"
+            className="h-7 w-7 text-text-muted hover:text-danger"
           >
-            <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
           </Button>
-        )}
+        </div>
         {completed && (
           <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-success">
             <CheckCircle2 className="h-3 w-3" strokeWidth={2} aria-hidden />

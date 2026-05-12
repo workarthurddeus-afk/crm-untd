@@ -48,6 +48,20 @@ describe('leadsRepo', () => {
     expect(hotLeads.every((lead) => lead.temperature === 'hot')).toBe(true)
   })
 
+  it('archives leads out of the default list and allows explicit archived queries', async () => {
+    await leadsRepo.seedDemoData()
+
+    const archived = await leadsRepo.archiveLead('lead-001', '2026-05-12T12:00:00.000Z')
+
+    expect(archived.archivedAt).toBe('2026-05-12T12:00:00.000Z')
+    await expect(leadsRepo.list()).resolves.not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'lead-001' })])
+    )
+    await expect(leadsRepo.list({ archivedAt: '2026-05-12T12:00:00.000Z' })).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'lead-001' })])
+    )
+  })
+
   it('creates leads with id and timestamps', async () => {
     const created = await leadsRepo.create({
       name: 'Novo Lead',

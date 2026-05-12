@@ -2,6 +2,7 @@
 
 import { use, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { SearchX } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLead } from '@/lib/hooks/use-leads'
@@ -15,6 +16,7 @@ import { LeadInteractionDialog } from '@/components/leads/lead-interaction-dialo
 import { NextActionCard } from '@/components/leads/next-action-card'
 import { QuickFacts } from '@/components/leads/quick-facts'
 import { LeadDetailSkeleton } from '@/components/leads/lead-detail-skeleton'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import { interactionsRepo } from '@/lib/repositories/interaction.repository'
 import { leadsRepo } from '@/lib/repositories/leads.repository'
 
@@ -24,10 +26,13 @@ interface PageProps {
 
 export default function LeadDetailPage({ params }: PageProps) {
   const { id } = use(params)
+  const router = useRouter()
   const { lead, isLoading } = useLead(id)
   const { stages } = usePipelineStages()
   const [editOpen, setEditOpen] = useState(false)
   const [interactionOpen, setInteractionOpen] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (isLoading) {
     return <LeadDetailSkeleton />
@@ -105,6 +110,24 @@ export default function LeadDetailPage({ params }: PageProps) {
     toast.success('Lead reaberto')
   }
 
+  async function archiveLead() {
+    if (!lead) return
+    await leadsRepo.archiveLead(lead.id)
+    toast.success('Lead arquivado', {
+      description: `${lead.name} saiu das listas ativas.`,
+    })
+    router.push('/leads')
+  }
+
+  async function deleteLeadPermanently() {
+    if (!lead) return
+    await leadsRepo.deleteLead(lead.id)
+    toast.success('Lead excluido permanentemente', {
+      description: lead.name,
+    })
+    router.push('/leads')
+  }
+
   return (
     <div className="px-8 py-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
@@ -117,6 +140,8 @@ export default function LeadDetailPage({ params }: PageProps) {
             onMarkLost={confirmMarkLost}
             onReopen={reopen}
             onLogInteraction={() => setInteractionOpen(true)}
+            onArchive={() => setArchiveOpen(true)}
+            onDelete={() => setDeleteOpen(true)}
           />
           <LeadDetailTabs lead={lead} stage={stage} />
         </div>
@@ -142,6 +167,23 @@ export default function LeadDetailPage({ params }: PageProps) {
         leadName={lead.name}
         onOpenChange={setInteractionOpen}
         onCreate={interactionsRepo.create}
+      />
+      <DestructiveConfirmDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        title="Arquivar lead?"
+        description="O lead deixa de aparecer em Leads e CRM por padrao, mas o historico fica preservado."
+        confirmLabel="Arquivar lead"
+        onConfirm={archiveLead}
+      />
+      <DestructiveConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Excluir lead permanentemente?"
+        description="Essa acao nao pode ser desfeita. Ela remove o lead e pode remover registros dependentes definidos pelo banco."
+        confirmLabel="Excluir lead"
+        confirmationText="EXCLUIR"
+        onConfirm={deleteLeadPermanently}
       />
     </div>
   )

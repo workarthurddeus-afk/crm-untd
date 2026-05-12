@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Send,
   MessageCircle,
@@ -12,12 +13,16 @@ import {
   XCircle,
   StickyNote,
   History,
+  Trash2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useReducedMotion } from 'framer-motion'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/empty-state'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import { StaggerList, StaggerItem } from '@/components/motion/stagger'
 import { useInteractions } from '@/lib/hooks/use-interactions'
 import type { InteractionType, LeadInteraction } from '@/lib/types'
@@ -99,7 +104,7 @@ function formatDate(iso: string): string {
 
 function TimelineItemSkeleton() {
   return (
-    <div className="flex gap-4">
+    <div className="group flex gap-4">
       <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
       <div className="flex flex-1 flex-col gap-2 pt-1">
         <div className="flex items-baseline justify-between gap-4">
@@ -112,7 +117,13 @@ function TimelineItemSkeleton() {
   )
 }
 
-function TimelineItem({ interaction }: { interaction: LeadInteraction }) {
+function TimelineItem({
+  interaction,
+  onRequestDelete,
+}: {
+  interaction: LeadInteraction
+  onRequestDelete: (interaction: LeadInteraction) => void
+}) {
   const config = typeConfig[interaction.type]
   const Icon = config.icon
 
@@ -128,9 +139,21 @@ function TimelineItem({ interaction }: { interaction: LeadInteraction }) {
           <span className="text-sm font-semibold text-text">
             {typeLabel[interaction.type]}
           </span>
-          <span className="text-xs text-text-muted font-mono tabular-nums shrink-0">
-            {formatDate(interaction.occurredAt)}
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="text-xs text-text-muted font-mono tabular-nums">
+              {formatDate(interaction.occurredAt)}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Excluir interacao"
+              onClick={() => onRequestDelete(interaction)}
+              className="h-7 w-7 opacity-0 transition-opacity duration-fast group-hover:opacity-100 focus-visible:opacity-100"
+            >
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            </Button>
+          </div>
         </div>
         {interaction.description && (
           <p className="text-sm text-text-secondary leading-relaxed mt-1">
@@ -147,8 +170,16 @@ interface Props {
 }
 
 export function LeadTimeline({ leadId }: Props) {
-  const { interactions, isLoading } = useInteractions(leadId)
+  const { interactions, isLoading, actions } = useInteractions(leadId)
   const reduced = useReducedMotion()
+  const [interactionToDelete, setInteractionToDelete] = useState<LeadInteraction | null>(null)
+
+  async function deleteInteraction() {
+    if (!interactionToDelete) return
+    await actions.deleteInteraction(interactionToDelete.id)
+    toast.success('Interacao excluida')
+    setInteractionToDelete(null)
+  }
 
   if (isLoading) {
     return (
@@ -177,9 +208,23 @@ export function LeadTimeline({ leadId }: Props) {
         <div className="absolute left-[17px] top-4 bottom-0 w-px bg-border" />
         <div className="flex flex-col gap-5">
           {interactions.map((interaction) => (
-            <TimelineItem key={interaction.id} interaction={interaction} />
+            <TimelineItem
+              key={interaction.id}
+              interaction={interaction}
+              onRequestDelete={setInteractionToDelete}
+            />
           ))}
         </div>
+        <DestructiveConfirmDialog
+          open={Boolean(interactionToDelete)}
+          onOpenChange={(open) => {
+            if (!open) setInteractionToDelete(null)
+          }}
+          title="Excluir interacao?"
+          description="Essa entrada sai da timeline do lead. A acao nao pode ser desfeita."
+          confirmLabel="Excluir interacao"
+          onConfirm={deleteInteraction}
+        />
       </div>
     )
   }
@@ -190,10 +235,23 @@ export function LeadTimeline({ leadId }: Props) {
       <StaggerList className="flex flex-col gap-5">
         {interactions.map((interaction) => (
           <StaggerItem key={interaction.id}>
-            <TimelineItem interaction={interaction} />
+            <TimelineItem
+              interaction={interaction}
+              onRequestDelete={setInteractionToDelete}
+            />
           </StaggerItem>
         ))}
       </StaggerList>
+      <DestructiveConfirmDialog
+        open={Boolean(interactionToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setInteractionToDelete(null)
+        }}
+        title="Excluir interacao?"
+        description="Essa entrada sai da timeline do lead. A acao nao pode ser desfeita."
+        confirmLabel="Excluir interacao"
+        onConfirm={deleteInteraction}
+      />
     </div>
   )
 }

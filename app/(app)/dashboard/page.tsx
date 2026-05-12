@@ -38,10 +38,15 @@ export default function DashboardPage() {
     tasks,
     isLoading: tasksLoading,
     createTask,
+    createTaskWithCalendar,
     updateTask,
+    updateTaskWithCalendar,
     completeTask,
     reopenTask,
     cancelTask,
+    archiveTask,
+    restoreTask,
+    deleteTaskPermanently,
     postponeTask,
     scheduleTaskOnCalendar,
   } = useTasks()
@@ -125,11 +130,18 @@ export default function DashboardPage() {
         leads={leads}
         notes={notes}
         onOpenChange={setTaskSheetOpen}
-        onCreate={(input: TaskInput) => createTask(input)}
-        onUpdate={(id: string, input: Partial<TaskInput>) => updateTask(id, input)}
+        onCreate={(input: TaskInput, options?: { addToCalendar?: boolean }) =>
+          options?.addToCalendar ? createTaskWithCalendar(input, options).then((result) => result.task) : createTask(input)
+        }
+        onUpdate={(id: string, input: Partial<TaskInput>, options?: { addToCalendar?: boolean }) =>
+          options?.addToCalendar ? updateTaskWithCalendar(id, input, options).then((result) => result.task) : updateTask(id, input)
+        }
         onComplete={completeTask}
         onReopen={reopenTask}
         onCancelTask={cancelTask}
+        onArchiveTask={archiveTask}
+        onRestoreTask={restoreTask}
+        onDeleteTask={deleteTaskPermanently}
         onPostpone={postponeTask}
         onScheduleOnCalendar={scheduleTaskOnCalendar}
       />

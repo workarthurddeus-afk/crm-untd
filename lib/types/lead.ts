@@ -45,6 +45,7 @@ export interface Lead {
   tagIds: string[]
   internalNotes?: string
   result: LeadResult
+  archivedAt?: string | null
   createdAt: string
   updatedAt: string
 }

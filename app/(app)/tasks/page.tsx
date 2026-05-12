@@ -39,6 +39,9 @@ export default function TasksPage() {
     completeTask,
     reopenTask,
     cancelTask,
+    archiveTask,
+    restoreTask,
+    deleteTaskPermanently,
     postponeTask,
     scheduleTaskOnCalendar,
   } = useTasks()
@@ -382,6 +385,9 @@ export default function TasksPage() {
         onComplete={completeTask}
         onReopen={reopenTask}
         onCancelTask={cancelTask}
+        onArchiveTask={archiveTask}
+        onRestoreTask={restoreTask}
+        onDeleteTask={deleteTaskPermanently}
         onPostpone={postponeTask}
         onScheduleOnCalendar={scheduleTaskOnCalendar}
       />

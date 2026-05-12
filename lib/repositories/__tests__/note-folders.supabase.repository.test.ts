@@ -130,6 +130,16 @@ describe('note folders Supabase repository', () => {
     })
   })
 
+  it('deletes folders through Supabase', async () => {
+    const fake = createFakeClient()
+    const repo = createNoteFoldersSupabaseRepository(fake)
+
+    await repo.deleteFolder(row.id)
+
+    expect(fake.calls).toContainEqual({ method: 'delete' })
+    expect(fake.calls).toContainEqual({ method: 'eq', payload: row.id })
+  })
+
   it('requires an authenticated user before mutating folders', async () => {
     const repo = createNoteFoldersSupabaseRepository(createFakeClient([], null))
 

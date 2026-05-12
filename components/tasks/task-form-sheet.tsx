@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import {
+  Archive,
+  ArchiveRestore,
   CalendarClock,
   CalendarCheck2,
   CalendarPlus,
@@ -12,6 +14,7 @@ import {
   PauseCircle,
   RotateCcw,
   Save,
+  Trash2,
   XCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -38,6 +41,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import { cn } from '@/lib/utils/cn'
 import type { Lead, Note, Task, TaskInput } from '@/lib/types'
 import {
@@ -64,6 +68,9 @@ interface Props {
   onComplete: (id: string) => Promise<Task>
   onReopen: (id: string) => Promise<Task>
   onCancelTask: (id: string) => Promise<Task>
+  onArchiveTask: (id: string) => Promise<Task>
+  onRestoreTask: (id: string) => Promise<Task>
+  onDeleteTask: (id: string, options?: { deleteCalendarEvent?: boolean }) => Promise<void>
   onPostpone: (id: string, dueDate: string) => Promise<Task>
   onScheduleOnCalendar: (id: string) => Promise<{ task: Task; created: boolean }>
 }
@@ -73,6 +80,7 @@ type BusyAction =
   | 'complete'
   | 'reopen'
   | 'cancel'
+  | 'archive'
   | 'postpone'
   | 'schedule'
   | 'copy'
@@ -136,6 +144,9 @@ export function TaskFormSheet({
   onComplete,
   onReopen,
   onCancelTask,
+  onArchiveTask,
+  onRestoreTask,
+  onDeleteTask,
   onPostpone,
   onScheduleOnCalendar,
 }: Props) {
@@ -143,6 +154,8 @@ export function TaskFormSheet({
   const [titleError, setTitleError] = useState<string | undefined>()
   const [calendarError, setCalendarError] = useState<string | undefined>()
   const [busyAction, setBusyAction] = useState<BusyAction>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteCalendarEvent, setDeleteCalendarEvent] = useState(false)
   const isEdit = Boolean(task)
   const isBusy = busyAction !== null
 
@@ -154,6 +167,8 @@ export function TaskFormSheet({
     setTitleError(undefined)
     setCalendarError(undefined)
     setBusyAction(null)
+    setDeleteOpen(false)
+    setDeleteCalendarEvent(false)
   } else if (!open && prevSeed !== seed) {
     setPrevSeed(seed)
   }
@@ -281,6 +296,36 @@ export function TaskFormSheet({
     }
   }
 
+  async function handleArchiveToggle() {
+    if (!task) return
+    setBusyAction('archive')
+    try {
+      const updated = task.archivedAt ? await onRestoreTask(task.id) : await onArchiveTask(task.id)
+      setForm(taskToFormState(updated))
+      toast.success(task.archivedAt ? 'Tarefa restaurada' : 'Tarefa arquivada', {
+        description: updated.title,
+      })
+      if (!task.archivedAt) {
+        onOpenChange(false)
+      }
+    } catch (err) {
+      toast.error('Acao nao concluida', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  async function handleDeleteTask() {
+    if (!task) return
+    await onDeleteTask(task.id, { deleteCalendarEvent })
+    toast.success('Tarefa excluida permanentemente', {
+      description: task.title,
+    })
+    onOpenChange(false)
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[min(560px,96vw)] max-w-[96vw]">
@@ -395,6 +440,23 @@ export function TaskFormSheet({
                   </Button>
                   <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleArchiveToggle()}
+                    disabled={isBusy}
+                    className="min-h-11 justify-start"
+                  >
+                    {busyAction === 'archive' ? (
+                      <Loader2 className="animate-spin" aria-hidden />
+                    ) : task?.archivedAt ? (
+                      <ArchiveRestore aria-hidden />
+                    ) : (
+                      <Archive aria-hidden />
+                    )}
+                    {task?.archivedAt ? 'Restaurar' : 'Arquivar'}
+                  </Button>
+                  <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => void handleCopy()}
@@ -402,6 +464,16 @@ export function TaskFormSheet({
                     className="min-h-11 justify-start"
                   >
                     <Clipboard aria-hidden /> Copiar contexto
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteOpen(true)}
+                    disabled={isBusy}
+                    className="min-h-11 justify-start"
+                  >
+                    <Trash2 aria-hidden /> Excluir
                   </Button>
                 </div>
               </section>
@@ -660,6 +732,33 @@ export function TaskFormSheet({
             </Button>
           </SheetFooter>
         </form>
+        <DestructiveConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title="Excluir tarefa permanentemente?"
+          description="Essa acao remove a tarefa do plano operacional. Se existir evento vinculado, escolha abaixo se ele tambem deve sair do calendario."
+          confirmLabel="Excluir tarefa"
+          confirmationText="EXCLUIR"
+          onConfirm={handleDeleteTask}
+        >
+          {task?.relatedCalendarEventId && (
+            <div className="rounded-lg border border-border-subtle bg-surface/45 p-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-text">Remover evento vinculado</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-muted">
+                    Desmarcado, o evento continua no calendario e apenas perde o vinculo com a tarefa.
+                  </p>
+                </div>
+                <Switch
+                  checked={deleteCalendarEvent}
+                  onCheckedChange={setDeleteCalendarEvent}
+                  aria-label="Remover evento vinculado"
+                />
+              </div>
+            </div>
+          )}
+        </DestructiveConfirmDialog>
       </SheetContent>
     </Sheet>
   )

@@ -46,6 +46,7 @@ export const leadInputSchema = z.object({
   tagIds: z.array(z.string()).default([]),
   internalNotes: z.string().max(2000).optional(),
   result: leadResultSchema.default('open'),
+  archivedAt: z.string().nullable().optional(),
 })
 
 export type LeadInputSchema = z.infer<typeof leadInputSchema>

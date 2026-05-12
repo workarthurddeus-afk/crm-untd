@@ -18,6 +18,8 @@ import { NoteDetail } from '@/components/notes/note-detail'
 import { NoteEditorSheet } from '@/components/notes/note-editor-sheet'
 import { NoteFolderSheet } from '@/components/notes/note-folder-sheet'
 import { StrategicMemoryPanel } from '@/components/notes/strategic-memory-panel'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
+import type { NoteFolderWithCount } from '@/lib/services/note-folders.service'
 import type { Note, NoteFolderInput, NoteInput } from '@/lib/types'
 
 const ARCHIVED_FETCH_FILTER: NoteFilters = { isArchived: true }
@@ -60,6 +62,7 @@ export default function NotesPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [folderSheetOpen, setFolderSheetOpen] = useState(false)
+  const [folderToDelete, setFolderToDelete] = useState<NoteFolderWithCount | null>(null)
 
   // Two stable hook calls — one for active library, one for archived.
   const { notes: activeNotes, isLoading: activeLoading, actions } = useNotes()
@@ -198,6 +201,19 @@ export default function NotesPage() {
     }
   }
 
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await actions.deletePermanently(noteId)
+      setSelectedNoteId((current) => (current === noteId ? null : current))
+      toast.success('Nota excluida permanentemente')
+    } catch (err) {
+      toast.error('Falha ao excluir nota', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+      throw err
+    }
+  }
+
   const handleCopyContent = async (note: Note) => {
     try {
       await navigator.clipboard.writeText(`# ${note.title}\n\n${note.content}`)
@@ -254,6 +270,27 @@ export default function NotesPage() {
     return created
   }
 
+  const handleDeleteFolder = async () => {
+    if (!folderToDelete) return
+    try {
+      await folderActions.delete(folderToDelete.id)
+      setActiveFilter((current) =>
+        current.kind === 'folder' && current.folderId === folderToDelete.id
+          ? { kind: 'all' }
+          : current
+      )
+      toast.success('Pasta excluida', {
+        description: 'Notas dessa pasta foram movidas para Sem pasta.',
+      })
+      setFolderToDelete(null)
+    } catch (err) {
+      toast.error('Falha ao excluir pasta', {
+        description: err instanceof Error ? err.message : String(err),
+      })
+      throw err
+    }
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <NotesPageHeader
@@ -278,6 +315,7 @@ export default function NotesPage() {
           foldersLoading={foldersLoading}
           tagCloud={tagCloud}
           counts={counts}
+          onDeleteFolder={setFolderToDelete}
           topSlot={
             <StrategicMemoryPanel
               memory={memory}
@@ -322,6 +360,9 @@ export default function NotesPage() {
             onRestore={async () => {
               if (selectedNote) await handleRestore(selectedNote.id)
             }}
+            onDelete={async () => {
+              if (selectedNote) await handleDeleteNote(selectedNote.id)
+            }}
             onTransformToTask={async () => {
               if (selectedNote) await handleTransformToTask(selectedNote)
             }}
@@ -363,6 +404,16 @@ export default function NotesPage() {
         nextOrder={nextFolderOrder}
         onOpenChange={setFolderSheetOpen}
         onCreate={handleCreateFolder}
+      />
+      <DestructiveConfirmDialog
+        open={Boolean(folderToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setFolderToDelete(null)
+        }}
+        title="Excluir pasta?"
+        description="A pasta sera removida, mas as notas dentro dela serao movidas para Sem pasta."
+        confirmLabel="Excluir pasta"
+        onConfirm={handleDeleteFolder}
       />
     </div>
   )

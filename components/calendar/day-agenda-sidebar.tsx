@@ -24,6 +24,7 @@ interface Props {
   onComplete: (eventId: string) => Promise<void> | void
   onUncomplete: (eventId: string) => Promise<void> | void
   onCancel: (eventId: string) => Promise<void> | void
+  onDelete: (event: CalendarEvent) => void
   onAdd: () => void
   today: Date
 }
@@ -84,6 +85,7 @@ export function DayAgendaSidebar({
   onComplete,
   onUncomplete,
   onCancel,
+  onDelete,
   onAdd,
   today,
 }: Props) {
@@ -177,6 +179,7 @@ export function DayAgendaSidebar({
                           onComplete={() => onComplete(event.id)}
                           onUncomplete={() => onUncomplete(event.id)}
                           onCancel={() => onCancel(event.id)}
+                          onDelete={() => onDelete(event)}
                           today={today}
                         />
                       ))}

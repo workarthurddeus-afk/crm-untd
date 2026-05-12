@@ -18,6 +18,7 @@ const row: SupabaseLeadRow = {
   result: 'open',
   created_at: '2026-05-01T00:00:00.000Z',
   updated_at: '2026-05-01T00:00:00.000Z',
+  archived_at: null,
 }
 
 function createFakeClient(
@@ -157,6 +158,20 @@ describe('leads Supabase repository', () => {
     await repo.delete(row.id)
 
     expect(calls).toBe(1)
+  })
+
+  it('archives leads through archived_at instead of hard deleting by default', async () => {
+    const fake = createFakeClient()
+    const repo = createLeadsSupabaseRepository(fake)
+
+    await repo.archiveLead(row.id, '2026-05-12T12:00:00.000Z')
+
+    expect(fake.calls).toContainEqual({
+      method: 'update',
+      payload: expect.objectContaining({
+        archived_at: '2026-05-12T12:00:00.000Z',
+      }),
+    })
   })
 
   it('translates company_name constraint errors into a friendly message', async () => {

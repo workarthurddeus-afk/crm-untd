@@ -62,6 +62,17 @@ describe('interactionsRepo', () => {
     expect(updated.description).toBe('Descricao revisada.')
   })
 
+  it('deletes an interaction from the lead timeline', async () => {
+    await interactionsRepo.seedDemoData()
+
+    await interactionsRepo.delete('interaction-001-01')
+
+    await expect(interactionsRepo.getById('interaction-001-01')).resolves.toBeNull()
+    await expect(interactionsRepo.list({ leadId: 'lead-001' })).resolves.not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'interaction-001-01' })])
+    )
+  })
+
   it('notifies subscribers on mutations', async () => {
     let calls = 0
     const unsubscribe = interactionsRepo.subscribe(() => calls++)

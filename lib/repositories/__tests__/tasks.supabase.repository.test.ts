@@ -166,6 +166,21 @@ describe('tasks Supabase repository', () => {
     })
   })
 
+  it('persists archive and permanent delete through Supabase', async () => {
+    const fake = createFakeClient()
+    const repo = createTasksSupabaseRepository(fake)
+
+    await repo.update(row.id, { archivedAt: '2026-05-12T12:00:00.000Z' })
+    await repo.delete(row.id)
+
+    expect(fake.calls).toContainEqual({
+      method: 'update',
+      payload: expect.objectContaining({ archived_at: '2026-05-12T12:00:00.000Z' }),
+    })
+    expect(fake.calls).toContainEqual({ method: 'delete' })
+    expect(fake.calls).toContainEqual({ method: 'eq', payload: row.id })
+  })
+
   it('requires an authenticated user before creating tasks', async () => {
     const repo = createTasksSupabaseRepository(createFakeClient([], null))
 

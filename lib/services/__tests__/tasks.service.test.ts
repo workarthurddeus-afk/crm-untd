@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   buildDailyPlan,
+  archiveTask,
   cancelTask,
   completeTask,
   createTask,
   createTaskWithCalendar,
+  deleteTaskPermanently,
   getDashboardTasksSummary,
   getOverdueTasks,
   getTasksForLead,
@@ -12,6 +14,7 @@ import {
   getTodayTasks,
   getUpcomingTasks,
   reopenTask,
+  restoreTask,
   scheduleTaskOnCalendar,
   postponeTask,
   tasksDueToday,
@@ -137,6 +140,22 @@ describe('task service actions', () => {
     expect(cancelled.status).toBe('cancelled')
     expect(cancelled.cancelledAt).toBe('2026-05-01T10:00:00.000Z')
     expect(overdue.some((task) => task.id === 'task-001')).toBe(false)
+  })
+
+  it('archiveTask hides a task from default lists and restoreTask brings it back', async () => {
+    const archived = await archiveTask('task-001', '2026-05-12T12:00:00.000Z')
+
+    expect(archived.archivedAt).toBe('2026-05-12T12:00:00.000Z')
+    await expect(tasksRepo.list()).resolves.not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'task-001' })])
+    )
+
+    const restored = await restoreTask('task-001')
+
+    expect(restored.archivedAt).toBeNull()
+    await expect(tasksRepo.list()).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'task-001' })])
+    )
   })
 
   it('postponeTask updates the due date without changing the current status', async () => {
@@ -276,6 +295,36 @@ describe('task service actions', () => {
     await expect(tasksRepo.getById('task-004')).resolves.toMatchObject({
       relatedCalendarEventId: first.event.id,
     })
+  })
+
+  it('deleteTaskPermanently unlinks linked calendar events by default', async () => {
+    const scheduled = await scheduleTaskOnCalendar('task-004')
+
+    await deleteTaskPermanently('task-004')
+
+    await expect(tasksRepo.getById('task-004')).resolves.toBeNull()
+    await expect(calendarEventsRepo.getEventById(scheduled.event.id)).resolves.toMatchObject({
+      relatedTaskId: null,
+    })
+  })
+
+  it('deleteTaskPermanently can delete linked calendar events when requested', async () => {
+    const scheduled = await createTaskWithCalendar(
+      {
+        title: 'Excluir tarefa e evento',
+        dueDate: '2026-05-13T10:00:00.000Z',
+        importance: 'medium',
+        status: 'pending',
+        category: 'ops',
+        tagIds: [],
+      },
+      { addToCalendar: true },
+    )
+
+    await deleteTaskPermanently(scheduled.task.id, { deleteCalendarEvent: true })
+
+    await expect(tasksRepo.getById(scheduled.task.id)).resolves.toBeNull()
+    await expect(calendarEventsRepo.getEventById(scheduled.calendarEvent?.id ?? '')).resolves.toBeNull()
   })
 })
 

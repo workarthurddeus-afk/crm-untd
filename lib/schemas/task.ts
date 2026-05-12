@@ -22,7 +22,7 @@ export const taskInputSchema = z.object({
   ]),
   relatedLeadId: z.string().optional(),
   relatedNoteId: z.string().optional(),
-  relatedCalendarEventId: z.string().optional(),
+  relatedCalendarEventId: z.string().nullable().optional(),
   relatedFeedbackId: z.string().optional(),
   source: z.enum([
     'manual',
@@ -50,7 +50,7 @@ export const taskInputSchema = z.object({
   ]).optional(),
   completedAt: z.string().optional(),
   cancelledAt: z.string().optional(),
-  archivedAt: z.string().optional(),
+  archivedAt: z.string().nullable().optional(),
   tagIds: z.array(z.string()).default([]),
 })
 

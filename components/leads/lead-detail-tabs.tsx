@@ -124,6 +124,11 @@ export function LeadDetailTabs({ lead, stage }: Props) {
     })
   }
 
+  async function deleteLeadFeedback(id: string): Promise<void> {
+    await feedbackActions.deleteFeedback(id)
+    setSelectedFeedbackId((current) => (current === id ? null : current))
+  }
+
   return (
     <>
       <Tabs defaultValue="visao-geral" className="w-full">
@@ -204,6 +209,7 @@ export function LeadDetailTabs({ lead, stage }: Props) {
         onReopen={feedbackActions.reopenFeedback}
         onArchive={feedbackActions.archiveFeedback}
         onRestore={feedbackActions.unarchiveFeedback}
+        onDelete={deleteLeadFeedback}
         onPin={feedbackActions.pinFeedback}
         onUnpin={feedbackActions.unpinFeedback}
         onConvertToNote={convertFeedbackToNote}

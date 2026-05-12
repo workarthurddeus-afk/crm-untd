@@ -9,6 +9,7 @@ import {
   Layers,
   Pin,
   TrendingUp,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -42,6 +43,7 @@ interface Props {
     archived: number
   }
   topSlot?: React.ReactNode
+  onDeleteFolder?: (folder: NoteFolderWithCount) => void
 }
 
 interface QuickItem {
@@ -129,6 +131,7 @@ export function NotesSidebar({
   tagCloud,
   counts,
   topSlot,
+  onDeleteFolder,
 }: Props) {
   const quickItems = useMemo<QuickItem[]>(
     () => [
@@ -178,19 +181,37 @@ export function NotesSidebar({
                 const isActive =
                   active.kind === 'folder' && active.folderId === folder.id
                 return (
-                  <Row
-                    key={folder.id}
-                    active={isActive}
-                    icon={Icon}
-                    label={folder.name}
-                    count={folder.activeNoteCount}
-                    onClick={() => onChange({ kind: 'folder', folderId: folder.id })}
-                    trailing={
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                        <NoteColorDot color={folder.color} size="sm" />
-                      </span>
-                    }
-                  />
+                  <div key={folder.id} className="group/folder flex items-center gap-1">
+                    <div className="min-w-0 flex-1">
+                      <Row
+                        active={isActive}
+                        icon={Icon}
+                        label={folder.name}
+                        count={folder.activeNoteCount}
+                        onClick={() => onChange({ kind: 'folder', folderId: folder.id })}
+                        trailing={
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                            <NoteColorDot color={folder.color} size="sm" />
+                          </span>
+                        }
+                      />
+                    </div>
+                    {onDeleteFolder && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteFolder(folder)}
+                        aria-label={`Excluir pasta ${folder.name}`}
+                        className={cn(
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted',
+                          'opacity-0 transition-all duration-fast hover:bg-danger/10 hover:text-danger',
+                          'focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                          'group-hover/folder:opacity-100'
+                        )}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                      </button>
+                    )}
+                  </div>
                 )
               })
             )}

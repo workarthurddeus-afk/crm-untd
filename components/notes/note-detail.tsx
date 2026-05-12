@@ -19,12 +19,14 @@ import {
   Pencil,
   Pin,
   Sparkles,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DestructiveConfirmDialog } from '@/components/shared/destructive-confirm-dialog'
 import { cn } from '@/lib/utils/cn'
 import {
   getNoteColorTokens,
@@ -50,6 +52,7 @@ interface Props {
   onToggleFavorite: () => Promise<void> | void
   onArchive: () => Promise<void> | void
   onRestore: () => Promise<void> | void
+  onDelete: () => Promise<void> | void
   onTransformToTask: () => Promise<void> | void
   onEdit: () => void
   onCopyContent: () => void
@@ -132,6 +135,7 @@ export function NoteDetail({
   onToggleFavorite,
   onArchive,
   onRestore,
+  onDelete,
   onTransformToTask,
   onEdit,
   onCopyContent,
@@ -139,6 +143,7 @@ export function NoteDetail({
   onClearSelection,
 }: Props) {
   const [working, setWorking] = useState<string | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const guard = async (key: string, fn: () => Promise<void> | void) => {
     if (working) return
@@ -254,6 +259,14 @@ export function NoteDetail({
             )}
             <Button variant="secondary" size="sm" onClick={onEdit}>
               <Pencil aria-hidden /> Editar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteOpen(true)}
+              disabled={Boolean(working)}
+            >
+              <Trash2 aria-hidden /> Excluir
             </Button>
             <Button
               variant={note.relatedTaskId ? 'secondary' : 'primary'}
@@ -383,6 +396,16 @@ export function NoteDetail({
           </div>
         </div>
       </ScrollArea>
+
+      <DestructiveConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Excluir nota permanentemente?"
+        description="Essa acao remove a nota da memoria estrategica. Tarefas ou feedbacks vinculados nao serao apagados automaticamente."
+        confirmLabel="Excluir nota"
+        confirmationText="EXCLUIR"
+        onConfirm={() => guard('delete', onDelete)}
+      />
     </article>
   )
 }

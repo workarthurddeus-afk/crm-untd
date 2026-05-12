@@ -1,4 +1,5 @@
 import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repository'
+import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import type { CalendarEvent, CalendarEventInput, CalendarFilters, Lead, Note, Task } from '@/lib/types'
 import {
   eventsOverlap,
@@ -194,6 +195,20 @@ export async function markEventUncompleted(id: string): Promise<CalendarEvent> {
 
 export async function cancelCalendarEvent(id: string): Promise<CalendarEvent> {
   return calendarEventsRepo.cancelEvent(id)
+}
+
+export async function deleteCalendarEvent(id: string): Promise<void> {
+  const event = await calendarEventsRepo.getEventById(id)
+  if (!event) throw new Error(`Calendar event ${id} not found`)
+
+  if (event.relatedTaskId) {
+    const task = await tasksRepo.getById(event.relatedTaskId)
+    if (task?.relatedCalendarEventId === id) {
+      await tasksRepo.update(task.id, { relatedCalendarEventId: null })
+    }
+  }
+
+  await calendarEventsRepo.deleteEvent(id)
 }
 
 export async function postponeCalendarEvent(

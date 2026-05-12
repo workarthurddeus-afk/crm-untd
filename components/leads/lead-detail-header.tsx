@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
+  Archive,
   ChevronLeft,
   MoreHorizontal,
   Pencil,
   Plus,
   RotateCcw,
+  Trash2,
   Trophy,
   XCircle,
 } from 'lucide-react'
@@ -43,6 +45,8 @@ interface Props {
   onMarkLost: () => void
   onReopen: () => void
   onLogInteraction: () => void
+  onArchive: () => void
+  onDelete: () => void
 }
 
 function avatarTintClasses(stageId: string): string {
@@ -79,6 +83,8 @@ export function LeadDetailHeader({
   onMarkLost,
   onReopen,
   onLogInteraction,
+  onArchive,
+  onDelete,
 }: Props) {
   const reduced = useReducedMotion()
   const closed = leadIsClosed(lead)
@@ -189,6 +195,39 @@ export function LeadDetailHeader({
                   <RotateCcw aria-hidden />
                   Reabrir lead
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Mais acoes"
+                    >
+                      <MoreHorizontal aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[220px]">
+                    <DropdownMenuItem onSelect={onArchive} disabled={Boolean(lead.archivedAt)}>
+                      <Archive
+                        className="h-4 w-4"
+                        strokeWidth={1.5}
+                        aria-hidden
+                      />
+                      {lead.archivedAt ? 'Lead arquivado' : 'Arquivar lead'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={onDelete}
+                      className="text-danger hover:text-danger data-[highlighted]:text-danger"
+                    >
+                      <Trash2
+                        className="h-4 w-4"
+                        strokeWidth={1.5}
+                        aria-hidden
+                      />
+                      Excluir permanentemente
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -211,6 +250,15 @@ export function LeadDetailHeader({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[200px]">
+                    <DropdownMenuItem onSelect={onArchive}>
+                      <Archive
+                        className="h-4 w-4"
+                        strokeWidth={1.5}
+                        aria-hidden
+                      />
+                      Arquivar lead
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={onMarkWon}>
                       <Trophy
                         className="h-4 w-4 text-success"
@@ -230,6 +278,18 @@ export function LeadDetailHeader({
                         aria-hidden
                       />
                       Marcar como perdido
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={onDelete}
+                      className="text-danger hover:text-danger data-[highlighted]:text-danger"
+                    >
+                      <Trash2
+                        className="h-4 w-4"
+                        strokeWidth={1.5}
+                        aria-hidden
+                      />
+                      Excluir permanentemente
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

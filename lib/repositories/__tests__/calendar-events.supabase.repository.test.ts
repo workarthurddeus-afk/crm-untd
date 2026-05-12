@@ -165,6 +165,16 @@ describe('calendar events Supabase repository', () => {
     await expect(repo.getEventsByTaskId(taskId)).resolves.toHaveLength(1)
   })
 
+  it('deletes events through Supabase', async () => {
+    const fake = createFakeClient()
+    const repo = createCalendarEventsSupabaseRepository(fake)
+
+    await repo.deleteEvent(row.id)
+
+    expect(fake.calls).toContainEqual({ method: 'delete' })
+    expect(fake.calls).toContainEqual({ method: 'eq', payload: row.id })
+  })
+
   it('requires an authenticated user before creating events', async () => {
     const repo = createCalendarEventsSupabaseRepository(createFakeClient([], null))
 

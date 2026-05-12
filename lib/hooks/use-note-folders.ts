@@ -5,6 +5,7 @@ import { noteFoldersRepo } from '@/lib/repositories/note-folders.repository'
 import {
   archiveNoteFolder,
   createNoteFolder,
+  deleteNoteFolder,
   getNoteFolders,
   restoreNoteFolder,
   updateNoteFolder,
@@ -57,6 +58,7 @@ export function useNoteFolders() {
       update: updateNoteFolder,
       archive: archiveNoteFolder,
       restore: restoreNoteFolder,
+      delete: deleteNoteFolder,
     }),
     []
   )

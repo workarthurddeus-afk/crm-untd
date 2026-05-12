@@ -42,6 +42,7 @@ const baseRow: SupabaseLeadRow = {
   suggested_approach: 'Mostrar prova visual.',
   created_at: '2026-05-01T12:00:00.000Z',
   updated_at: '2026-05-02T12:00:00.000Z',
+  archived_at: null,
 }
 
 describe('Supabase lead mapper', () => {
@@ -67,6 +68,7 @@ describe('Supabase lead mapper', () => {
       ownerId: 'arthur',
       tagIds: ['social-media'],
       result: 'open',
+      archivedAt: null,
       createdAt: '2026-05-01T12:00:00.000Z',
       updatedAt: '2026-05-02T12:00:00.000Z',
     })
@@ -157,12 +159,14 @@ describe('Supabase lead mapper', () => {
         result: 'won',
         icpScore: 101,
         location: { city: 'Sao Paulo' },
+        archivedAt: '2026-05-12T12:00:00.000Z',
         email: undefined,
       }, '9a449f5f-4e70-40fd-bb20-4e7679e4b9af')
     ).toEqual({
       user_id: '9a449f5f-4e70-40fd-bb20-4e7679e4b9af',
       pipeline_stage_id: 'proposal',
       result: 'won',
+      archived_at: '2026-05-12T12:00:00.000Z',
       icp_score: 100,
       fit_score: 100,
       city: 'Sao Paulo',

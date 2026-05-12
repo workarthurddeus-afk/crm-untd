@@ -59,9 +59,24 @@ async function getAuthenticatedUserId(client: LeadsSupabaseClient): Promise<stri
 }
 
 export type LeadsRepository = Repository<Lead> & {
+  archiveLead: (id: string, archivedAt?: string) => Promise<Lead>
+  unarchiveLead: (id: string) => Promise<Lead>
+  deleteLead: (id: string) => Promise<void>
   reset: () => Promise<void>
   clear: () => Promise<void>
   seedDemoData: () => Promise<void>
+}
+
+function hasArchivedAtFilter(filters?: Partial<Lead>): boolean {
+  return Boolean(filters && Object.prototype.hasOwnProperty.call(filters, 'archivedAt'))
+}
+
+function matchesFilters(lead: Lead, filters?: Partial<Lead>): boolean {
+  if (!filters) return true
+  return Object.entries(filters).every(([key, value]) => {
+    if (value === undefined) return true
+    return (lead as unknown as Record<string, unknown>)[key] === value
+  })
 }
 
 export function createLeadsSupabaseRepository(
@@ -79,14 +94,11 @@ export function createLeadsSupabaseRepository(
       raise(error)
 
       const leads: Lead[] = ((data ?? []) as SupabaseLeadRow[]).map(fromSupabaseLeadRow)
-      if (!filters) return leads
+      const visibleLeads = hasArchivedAtFilter(filters)
+        ? leads
+        : leads.filter((lead) => !lead.archivedAt)
 
-      return leads.filter((lead) =>
-        Object.entries(filters).every(([key, value]) => {
-          if (value === undefined) return true
-          return (lead as unknown as Record<string, unknown>)[key] === value
-        })
-      )
+      return visibleLeads.filter((lead) => matchesFilters(lead, filters))
     },
 
     async getById(id: string): Promise<Lead | null> {
@@ -127,6 +139,18 @@ export function createLeadsSupabaseRepository(
       const { error } = await client.from('leads').delete().eq('id', id)
       raise(error)
       notify()
+    },
+
+    async archiveLead(id: string, archivedAt = new Date().toISOString()): Promise<Lead> {
+      return this.update(id, { archivedAt })
+    },
+
+    async unarchiveLead(id: string): Promise<Lead> {
+      return this.update(id, { archivedAt: null })
+    },
+
+    async deleteLead(id: string): Promise<void> {
+      return this.delete(id)
     },
 
     subscribe(listener: () => void): () => void {

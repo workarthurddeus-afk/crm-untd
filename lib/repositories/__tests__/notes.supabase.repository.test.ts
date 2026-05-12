@@ -170,4 +170,14 @@ describe('notes Supabase repository', () => {
 
     expect(calls).toBe(1)
   })
+
+  it('deletes notes through Supabase', async () => {
+    const fake = createFakeClient()
+    const repo = createNotesSupabaseRepository(fake)
+
+    await repo.delete(row.id)
+
+    expect(fake.calls).toContainEqual({ method: 'delete' })
+    expect(fake.calls).toContainEqual({ method: 'eq', payload: row.id })
+  })
 })

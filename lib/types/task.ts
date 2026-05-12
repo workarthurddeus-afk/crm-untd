@@ -20,13 +20,13 @@ export interface Task {
   category: TaskCategory
   relatedLeadId?: string
   relatedNoteId?: string
-  relatedCalendarEventId?: string
+  relatedCalendarEventId?: string | null
   relatedFeedbackId?: string
   source?: TaskSource
   color?: TaskColor
   completedAt?: string
   cancelledAt?: string
-  archivedAt?: string
+  archivedAt?: string | null
   tagIds: string[]
   createdAt: string
   updatedAt: string

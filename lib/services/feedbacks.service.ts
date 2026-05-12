@@ -84,6 +84,10 @@ export async function unpinFeedback(id: string): Promise<Feedback> {
   return feedbacksRepo.unpinFeedback(id)
 }
 
+export async function deleteFeedbackPermanently(id: string): Promise<void> {
+  await feedbacksRepo.deleteFeedback(id)
+}
+
 export async function getFeedbacksByLead(leadId: string): Promise<Feedback[]> {
   return feedbacksRepo.getFeedbacksByLeadId(leadId)
 }

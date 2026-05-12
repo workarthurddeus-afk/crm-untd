@@ -56,6 +56,10 @@ export interface TaskCalendarSaveResult {
   calendarEventCreated: boolean
 }
 
+export interface DeleteTaskOptions {
+  deleteCalendarEvent?: boolean
+}
+
 export function isOpenTask(task: Task): boolean {
   return task.status === 'pending' || task.status === 'in-progress'
 }
@@ -239,6 +243,42 @@ export async function cancelTask(id: string, cancelledAt = nowIso()): Promise<Ta
     cancelledAt,
     completedAt: undefined,
   })
+}
+
+export async function archiveTask(id: string, archivedAt = nowIso()): Promise<Task> {
+  return tasksRepo.update(id, { archivedAt })
+}
+
+export async function restoreTask(id: string): Promise<Task> {
+  return tasksRepo.update(id, { archivedAt: null })
+}
+
+export async function deleteTaskPermanently(
+  id: string,
+  options: DeleteTaskOptions = {}
+): Promise<void> {
+  const task = await tasksRepo.getById(id)
+  if (!task) throw new Error(`Task ${id} not found`)
+
+  const linkedEvents = new Map<string, CalendarEvent>()
+  if (task.relatedCalendarEventId) {
+    const direct = await calendarEventsRepo.getEventById(task.relatedCalendarEventId)
+    if (direct) linkedEvents.set(direct.id, direct)
+  }
+
+  for (const event of await calendarEventsRepo.getEventsByTaskId(task.id)) {
+    linkedEvents.set(event.id, event)
+  }
+
+  for (const event of linkedEvents.values()) {
+    if (options.deleteCalendarEvent) {
+      await calendarEventsRepo.deleteEvent(event.id)
+    } else {
+      await calendarEventsRepo.updateEvent(event.id, { relatedTaskId: null })
+    }
+  }
+
+  await tasksRepo.delete(id)
 }
 
 export async function postponeTask(id: string, newDueDate: string): Promise<Task> {

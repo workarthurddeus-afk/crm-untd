@@ -182,6 +182,16 @@ describe('feedbacks Supabase repository', () => {
     ])
   })
 
+  it('deletes feedback through Supabase', async () => {
+    const fake = createFakeClient()
+    const repo = createFeedbacksSupabaseRepository(fake)
+
+    await repo.deleteFeedback(row.id)
+
+    expect(fake.calls).toContainEqual({ method: 'delete' })
+    expect(fake.calls).toContainEqual({ method: 'eq', payload: row.id })
+  })
+
   it('requires an authenticated user before creating feedback', async () => {
     const repo = createFeedbacksSupabaseRepository(createFakeClient([], null))
 

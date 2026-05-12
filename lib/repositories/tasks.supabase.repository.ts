@@ -73,6 +73,10 @@ function matchesFilters(task: Task, filters?: Partial<Task>): boolean {
   })
 }
 
+function hasArchivedAtFilter(filters?: Partial<Task>): boolean {
+  return Boolean(filters && Object.prototype.hasOwnProperty.call(filters, 'archivedAt'))
+}
+
 export function createTasksSupabaseRepository(
   client: TasksSupabaseClient = getSupabaseBrowserClient() as unknown as TasksSupabaseClient
 ): TasksRepository {
@@ -83,7 +87,11 @@ export function createTasksSupabaseRepository(
     async list(filters?: Partial<Task>): Promise<Task[]> {
       const { data, error } = await client.from('tasks').select('*').order('created_at', { ascending: false })
       raise(error)
-      return (data ?? []).map(fromSupabaseTaskRow).filter((task) => matchesFilters(task, filters))
+      const tasks = (data ?? []).map(fromSupabaseTaskRow)
+      const visibleTasks = hasArchivedAtFilter(filters)
+        ? tasks
+        : tasks.filter((task) => !task.archivedAt)
+      return visibleTasks.filter((task) => matchesFilters(task, filters))
     },
 
     async getById(id: string): Promise<Task | null> {

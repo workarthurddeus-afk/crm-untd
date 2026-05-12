@@ -7,12 +7,16 @@ import {
   completeTask as completeTaskAction,
   createTask as createTaskAction,
   createTaskWithCalendar as createTaskWithCalendarAction,
+  archiveTask as archiveTaskAction,
+  deleteTaskPermanently as deleteTaskPermanentlyAction,
   postponeTask as postponeTaskAction,
   reopenTask as reopenTaskAction,
+  restoreTask as restoreTaskAction,
   scheduleTaskOnCalendar as scheduleTaskOnCalendarAction,
   uncompleteTask as uncompleteTaskAction,
   updateTask as updateTaskAction,
   updateTaskWithCalendar as updateTaskWithCalendarAction,
+  type DeleteTaskOptions,
   type TaskCalendarSaveOptions,
 } from '@/lib/services/tasks.service'
 import type { Task, TaskInput } from '@/lib/types'
@@ -102,6 +106,15 @@ export function useTaskActions() {
   const cancelTask = useCallback((id: string, cancelledAt?: string) => {
     return cancelTaskAction(id, cancelledAt)
   }, [])
+  const archiveTask = useCallback((id: string, archivedAt?: string) => {
+    return archiveTaskAction(id, archivedAt)
+  }, [])
+  const restoreTask = useCallback((id: string) => {
+    return restoreTaskAction(id)
+  }, [])
+  const deleteTaskPermanently = useCallback((id: string, options?: DeleteTaskOptions) => {
+    return deleteTaskPermanentlyAction(id, options)
+  }, [])
   const postponeTask = useCallback((id: string, newDueDate: string) => {
     return postponeTaskAction(id, newDueDate)
   }, [])
@@ -118,6 +131,9 @@ export function useTaskActions() {
     reopenTask,
     uncompleteTask,
     cancelTask,
+    archiveTask,
+    restoreTask,
+    deleteTaskPermanently,
     postponeTask,
     scheduleTaskOnCalendar,
   }

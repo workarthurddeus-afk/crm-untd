@@ -5,6 +5,7 @@ import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repositor
 import {
   cancelCalendarEvent,
   createCalendarEvent,
+  deleteCalendarEvent,
   getCalendarRange,
   getDashboardCalendarSummary,
   getMonthAgenda,
@@ -40,6 +41,7 @@ function useCalendarActions() {
       completeEvent: markEventCompleted,
       uncompleteEvent: markEventUncompleted,
       cancelEvent: cancelCalendarEvent,
+      deleteEvent: deleteCalendarEvent,
       postponeEvent: postponeCalendarEvent,
     }),
     []

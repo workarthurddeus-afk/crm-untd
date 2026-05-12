@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { CalendarEvent, Lead, Note, Task } from '@/lib/types'
 import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repository'
+import { tasksRepo } from '@/lib/repositories/tasks.repository'
 import {
   cancelCalendarEvent,
+  deleteCalendarEvent,
   detectConflict,
   getDashboardCalendarSummary,
   getEventsGroupedByDay,
@@ -53,6 +55,7 @@ describe('calendar.service', () => {
   beforeEach(async () => {
     window.localStorage.clear()
     await calendarEventsRepo.seedDemoData()
+    await tasksRepo.seedDemoData()
   })
 
   it('getTodaySchedule returns today events ordered for the dashboard', async () => {
@@ -123,6 +126,19 @@ describe('calendar.service', () => {
 
     const today = await getTodaySchedule({ currentDate })
     expect(today.map((event) => event.id)).not.toContain('cal-003')
+  })
+
+  it('deleteCalendarEvent removes the event and clears the linked task pointer', async () => {
+    const linked = (await calendarEventsRepo.getEventsByTaskId('task-004'))[0]
+    expect(linked).toBeDefined()
+    await tasksRepo.update('task-004', { relatedCalendarEventId: linked!.id })
+
+    await deleteCalendarEvent(linked!.id)
+
+    await expect(calendarEventsRepo.getEventById(linked!.id)).resolves.toBeNull()
+    await expect(tasksRepo.getById('task-004')).resolves.toMatchObject({
+      relatedCalendarEventId: null,
+    })
   })
 
   it('getEventsGroupedByDay groups active events by date key', async () => {
