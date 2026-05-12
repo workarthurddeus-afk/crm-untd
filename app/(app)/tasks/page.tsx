@@ -33,7 +33,9 @@ export default function TasksPage() {
     tasks,
     isLoading: tasksLoading,
     createTask,
+    createTaskWithCalendar,
     updateTask,
+    updateTaskWithCalendar,
     completeTask,
     reopenTask,
     cancelTask,
@@ -177,13 +179,23 @@ export default function TasksPage() {
   }, [])
 
   const handleCreateTask = useCallback(
-    async (input: TaskInput) => createTask(input),
-    [createTask],
+    async (input: TaskInput, options?: { addToCalendar?: boolean }) => {
+      if (options?.addToCalendar) {
+        return (await createTaskWithCalendar(input, options)).task
+      }
+      return createTask(input)
+    },
+    [createTask, createTaskWithCalendar],
   )
 
   const handleUpdateTask = useCallback(
-    async (id: string, input: Partial<TaskInput>) => updateTask(id, input),
-    [updateTask],
+    async (id: string, input: Partial<TaskInput>, options?: { addToCalendar?: boolean }) => {
+      if (options?.addToCalendar || selectedTask?.relatedCalendarEventId) {
+        return (await updateTaskWithCalendar(id, input, options)).task
+      }
+      return updateTask(id, input)
+    },
+    [selectedTask?.relatedCalendarEventId, updateTask, updateTaskWithCalendar],
   )
 
   const resetAdvancedFilters = useCallback(() => {

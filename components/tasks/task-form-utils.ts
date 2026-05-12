@@ -75,6 +75,7 @@ export interface TaskFormState {
   relatedNoteId: string
   source: TaskSource
   color: TaskColor
+  addToCalendar: boolean
 }
 
 export function getDefaultTaskFormState(): TaskFormState {
@@ -91,6 +92,7 @@ export function getDefaultTaskFormState(): TaskFormState {
     relatedNoteId: NO_TASK_RELATION_VALUE,
     source: 'manual',
     color: 'purple',
+    addToCalendar: false,
   }
 }
 
@@ -110,6 +112,7 @@ export function taskToFormState(task: Task | null | undefined): TaskFormState {
     relatedNoteId: task.relatedNoteId ?? NO_TASK_RELATION_VALUE,
     source: task.source ?? 'manual',
     color: task.color ?? 'purple',
+    addToCalendar: Boolean(task.relatedCalendarEventId),
   }
 }
 

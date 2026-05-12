@@ -4,6 +4,7 @@ import {
   cancelTask,
   completeTask,
   createTask,
+  createTaskWithCalendar,
   getDashboardTasksSummary,
   getOverdueTasks,
   getTasksForLead,
@@ -19,6 +20,7 @@ import {
   transformCalendarEventToTaskPayload,
   transformLeadToFollowUpTaskPayload,
   transformNoteToTaskPayload,
+  updateTaskWithCalendar,
 } from '../tasks.service'
 import { calendarEventsRepo } from '@/lib/repositories/calendar-events.repository'
 import { tasksSeed } from '@/lib/mocks/seeds/tasks.seed'
@@ -190,6 +192,76 @@ describe('task service actions', () => {
     await expect(tasksRepo.getById(task.id)).resolves.toMatchObject({
       relatedCalendarEventId: result.event.id,
     })
+  })
+
+  it('createTaskWithCalendar creates a task, a linked calendar event, and stores the event id', async () => {
+    const result = await createTaskWithCalendar(
+      {
+        title: 'Criar proposta com agenda',
+        description: 'Salvar a tarefa ja no calendario.',
+        dueDate: '2026-05-10T09:00:00.000Z',
+        importance: 'high',
+        status: 'pending',
+        category: 'strategy',
+        tagIds: ['agenda'],
+      },
+      { addToCalendar: true },
+    )
+
+    expect(result.calendarEvent?.relatedTaskId).toBe(result.task.id)
+    expect(result.task.relatedCalendarEventId).toBe(result.calendarEvent?.id)
+    await expect(calendarEventsRepo.getEventById(result.calendarEvent?.id ?? '')).resolves.toMatchObject({
+      relatedTaskId: result.task.id,
+      startAt: '2026-05-10T09:00:00.000Z',
+    })
+  })
+
+  it('createTaskWithCalendar rejects calendar scheduling when the task has no due date', async () => {
+    await expect(
+      createTaskWithCalendar(
+        {
+          title: 'Sem data',
+          importance: 'medium',
+          status: 'pending',
+          category: 'ops',
+          tagIds: [],
+        },
+        { addToCalendar: true },
+      ),
+    ).rejects.toThrow('Defina uma data para adicionar a tarefa ao calendario.')
+  })
+
+  it('updateTaskWithCalendar updates the linked calendar event instead of duplicating it', async () => {
+    const created = await createTaskWithCalendar(
+      {
+        title: 'Revisar proposta',
+        dueDate: '2026-05-10T09:00:00.000Z',
+        importance: 'medium',
+        status: 'pending',
+        category: 'strategy',
+        tagIds: ['proposta'],
+      },
+      { addToCalendar: true },
+    )
+
+    const updated = await updateTaskWithCalendar(
+      created.task.id,
+      {
+        title: 'Revisar proposta final',
+        dueDate: '2026-05-11T10:00:00.000Z',
+      },
+      { addToCalendar: true },
+    )
+    const linkedEvents = await calendarEventsRepo.getEventsByTaskId(created.task.id)
+
+    expect(linkedEvents).toHaveLength(1)
+    expect(updated.calendarEvent).toMatchObject({
+      id: created.calendarEvent?.id,
+      title: 'Revisar proposta final',
+      startAt: '2026-05-11T10:00:00.000Z',
+      relatedTaskId: created.task.id,
+    })
+    expect(updated.task.relatedCalendarEventId).toBe(created.calendarEvent?.id)
   })
 
   it('scheduleTaskOnCalendar reuses the existing linked event instead of duplicating', async () => {

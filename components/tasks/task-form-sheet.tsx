@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import {
   Sheet,
   SheetBody,
@@ -58,8 +59,8 @@ interface Props {
   leads: Lead[]
   notes: Note[]
   onOpenChange: (open: boolean) => void
-  onCreate: (input: TaskInput) => Promise<Task>
-  onUpdate: (id: string, input: Partial<TaskInput>) => Promise<Task>
+  onCreate: (input: TaskInput, options?: { addToCalendar?: boolean }) => Promise<Task>
+  onUpdate: (id: string, input: Partial<TaskInput>, options?: { addToCalendar?: boolean }) => Promise<Task>
   onComplete: (id: string) => Promise<Task>
   onReopen: (id: string) => Promise<Task>
   onCancelTask: (id: string) => Promise<Task>
@@ -140,6 +141,7 @@ export function TaskFormSheet({
 }: Props) {
   const [form, setForm] = useState<TaskFormState>(() => getDefaultTaskFormState())
   const [titleError, setTitleError] = useState<string | undefined>()
+  const [calendarError, setCalendarError] = useState<string | undefined>()
   const [busyAction, setBusyAction] = useState<BusyAction>(null)
   const isEdit = Boolean(task)
   const isBusy = busyAction !== null
@@ -150,6 +152,7 @@ export function TaskFormSheet({
     setPrevSeed(seed)
     setForm(taskToFormState(task))
     setTitleError(undefined)
+    setCalendarError(undefined)
     setBusyAction(null)
   } else if (!open && prevSeed !== seed) {
     setPrevSeed(seed)
@@ -165,6 +168,9 @@ export function TaskFormSheet({
     if (key === 'title' && String(value).trim()) {
       setTitleError(undefined)
     }
+    if ((key === 'dueDate' || key === 'addToCalendar') && (key === 'addToCalendar' ? value === false : String(value))) {
+      setCalendarError(undefined)
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -173,18 +179,30 @@ export function TaskFormSheet({
       setTitleError('Digite um titulo para a tarefa.')
       return
     }
+    if (form.addToCalendar && !form.dueDate) {
+      setCalendarError('Defina uma data para criar o evento no calendario.')
+      return
+    }
 
     setBusyAction('save')
     try {
       const payload = buildTaskPayloadFromForm(form)
       if (task) {
-        const updated = await onUpdate(task.id, payload)
+        const updated = await onUpdate(task.id, payload, { addToCalendar: form.addToCalendar })
         setForm(taskToFormState(updated))
-        toast.success('Tarefa atualizada', { description: updated.title })
+        toast.success(
+          form.addToCalendar || updated.relatedCalendarEventId
+            ? 'Tarefa atualizada e calendario sincronizado'
+            : 'Tarefa atualizada',
+          { description: updated.title }
+        )
       } else {
-        const created = await onCreate(payload)
+        const created = await onCreate(payload, { addToCalendar: form.addToCalendar })
         setForm(taskToFormState(created))
-        toast.success('Tarefa criada', { description: created.title })
+        toast.success(
+          form.addToCalendar ? 'Tarefa criada e adicionada ao calendario' : 'Tarefa criada',
+          { description: created.title }
+        )
       }
       onOpenChange(false)
     } catch (err) {
@@ -432,6 +450,41 @@ export function TaskFormSheet({
                     onChange={(event) => update('dueTime', event.target.value)}
                   />
                 </TaskField>
+                <div className="sm:col-span-2">
+                  <div
+                    className={cn(
+                      'flex items-center justify-between gap-4 rounded-xl border p-3',
+                      task?.relatedCalendarEventId
+                        ? 'border-success/25 bg-success/10'
+                        : 'border-border-subtle bg-surface/45'
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <Label htmlFor="task-add-calendar" className="text-sm font-semibold text-text">
+                        {task?.relatedCalendarEventId ? 'Agendada no calendario' : 'Adicionar ao calendario'}
+                      </Label>
+                      <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                        {task?.relatedCalendarEventId
+                          ? 'Ao salvar, o evento vinculado acompanha titulo, status e data da tarefa.'
+                          : form.dueDate
+                            ? 'Cria um evento vinculado a esta tarefa.'
+                            : 'Defina uma data para habilitar o agendamento.'}
+                      </p>
+                      {calendarError && (
+                        <p id="task-add-calendar-error" role="alert" className="mt-2 text-[11px] text-danger">
+                          {calendarError}
+                        </p>
+                      )}
+                    </div>
+                    <Switch
+                      id="task-add-calendar"
+                      checked={form.addToCalendar}
+                      disabled={isBusy || Boolean(task?.relatedCalendarEventId) || !form.dueDate}
+                      aria-describedby={calendarError ? 'task-add-calendar-error' : undefined}
+                      onCheckedChange={(checked) => update('addToCalendar', checked)}
+                    />
+                  </div>
+                </div>
                 <TaskField label="Importancia" htmlFor="task-importance">
                   <Select
                     value={form.importance}

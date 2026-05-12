@@ -40,6 +40,7 @@ describe('task form utils', () => {
       color: 'purple',
       relatedLeadId: NO_TASK_RELATION_VALUE,
       relatedNoteId: NO_TASK_RELATION_VALUE,
+      addToCalendar: false,
     })
   })
 
@@ -53,7 +54,14 @@ describe('task form utils', () => {
       tags: 'follow-up, sales',
       relatedLeadId: 'lead-001',
       relatedNoteId: 'note-001',
+      addToCalendar: false,
     })
+  })
+
+  it('marks existing scheduled tasks as already attached to calendar', () => {
+    const form = taskToFormState(makeTask({ relatedCalendarEventId: 'event-001' }))
+
+    expect(form.addToCalendar).toBe(true)
   })
 
   it('builds a task payload with normalized optional fields', () => {

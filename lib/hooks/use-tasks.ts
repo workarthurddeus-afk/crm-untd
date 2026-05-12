@@ -6,11 +6,14 @@ import {
   cancelTask as cancelTaskAction,
   completeTask as completeTaskAction,
   createTask as createTaskAction,
+  createTaskWithCalendar as createTaskWithCalendarAction,
   postponeTask as postponeTaskAction,
   reopenTask as reopenTaskAction,
   scheduleTaskOnCalendar as scheduleTaskOnCalendarAction,
   uncompleteTask as uncompleteTaskAction,
   updateTask as updateTaskAction,
+  updateTaskWithCalendar as updateTaskWithCalendarAction,
+  type TaskCalendarSaveOptions,
 } from '@/lib/services/tasks.service'
 import type { Task, TaskInput } from '@/lib/types'
 
@@ -78,8 +81,17 @@ export function useTask(id: string | null) {
 
 export function useTaskActions() {
   const createTask = useCallback((input: TaskInput) => createTaskAction(input), [])
+  const createTaskWithCalendar = useCallback(
+    (input: TaskInput, options?: TaskCalendarSaveOptions) => createTaskWithCalendarAction(input, options),
+    []
+  )
   const updateTask = useCallback(
     (id: string, input: Partial<TaskInput>) => updateTaskAction(id, input),
+    []
+  )
+  const updateTaskWithCalendar = useCallback(
+    (id: string, input: Partial<TaskInput>, options?: TaskCalendarSaveOptions) =>
+      updateTaskWithCalendarAction(id, input, options),
     []
   )
   const completeTask = useCallback((id: string, completedAt?: string) => {
@@ -99,7 +111,9 @@ export function useTaskActions() {
 
   return {
     createTask,
+    createTaskWithCalendar,
     updateTask,
+    updateTaskWithCalendar,
     completeTask,
     reopenTask,
     uncompleteTask,

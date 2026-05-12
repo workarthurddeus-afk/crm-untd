@@ -46,6 +46,16 @@ export interface ScheduledTaskCalendarEvent {
   created: boolean
 }
 
+export interface TaskCalendarSaveOptions {
+  addToCalendar?: boolean
+}
+
+export interface TaskCalendarSaveResult {
+  task: Task
+  calendarEvent?: CalendarEvent
+  calendarEventCreated: boolean
+}
+
 export function isOpenTask(task: Task): boolean {
   return task.status === 'pending' || task.status === 'in-progress'
 }
@@ -146,12 +156,60 @@ export async function createTask(input: TaskInput): Promise<Task> {
   return tasksRepo.create(stamped)
 }
 
+export async function createTaskWithCalendar(
+  input: TaskInput,
+  options: TaskCalendarSaveOptions = {}
+): Promise<TaskCalendarSaveResult> {
+  if (options.addToCalendar && !input.dueDate) {
+    throw new Error('Defina uma data para adicionar a tarefa ao calendario.')
+  }
+
+  const task = await createTask(input)
+  if (!options.addToCalendar) {
+    return { task, calendarEventCreated: false }
+  }
+
+  const scheduled = await syncTaskCalendarEvent(task)
+  return {
+    task: scheduled.task,
+    calendarEvent: scheduled.event,
+    calendarEventCreated: scheduled.created,
+  }
+}
+
 export async function updateTask(id: string, input: Partial<TaskInput>): Promise<Task> {
   const existing = await tasksRepo.getById(id)
   if (!existing) throw new Error(`Task ${id} not found`)
 
   const parsed = taskUpdateSchema.parse(input)
   return tasksRepo.update(id, applyStatusMetadata({ ...existing, ...parsed }))
+}
+
+export async function updateTaskWithCalendar(
+  id: string,
+  input: Partial<TaskInput>,
+  options: TaskCalendarSaveOptions = {}
+): Promise<TaskCalendarSaveResult> {
+  const existing = await tasksRepo.getById(id)
+  if (!existing) throw new Error(`Task ${id} not found`)
+
+  const shouldSyncCalendar = options.addToCalendar || Boolean(existing.relatedCalendarEventId)
+  if (shouldSyncCalendar && !('dueDate' in input ? input.dueDate : existing.dueDate)) {
+    throw new Error('Defina uma data para adicionar a tarefa ao calendario.')
+  }
+
+  const updated = await updateTask(id, input)
+
+  if (!shouldSyncCalendar) {
+    return { task: updated, calendarEventCreated: false }
+  }
+
+  const scheduled = await syncTaskCalendarEvent(updated)
+  return {
+    task: scheduled.task,
+    calendarEvent: scheduled.event,
+    calendarEventCreated: scheduled.created,
+  }
 }
 
 export async function completeTask(id: string, completedAt = nowIso()): Promise<Task> {
@@ -191,19 +249,27 @@ export async function scheduleTaskOnCalendar(taskId: string): Promise<ScheduledT
   const task = await tasksRepo.getById(taskId)
   if (!task) throw new Error(`Task ${taskId} not found`)
 
+  if (!task.dueDate) throw new Error('Defina uma data para adicionar a tarefa ao calendario.')
+
+  return syncTaskCalendarEvent(task)
+}
+
+async function syncTaskCalendarEvent(task: Task): Promise<ScheduledTaskCalendarEvent> {
   if (task.relatedCalendarEventId) {
     const existing = await calendarEventsRepo.getEventById(task.relatedCalendarEventId)
     if (existing) {
-      return { task, event: existing, created: false }
+      const event = await calendarEventsRepo.updateEvent(existing.id, transformTaskToCalendarEventPayload(task))
+      return { task, event, created: false }
     }
   }
 
   const [existingByTask] = await calendarEventsRepo.getEventsByTaskId(task.id)
   if (existingByTask) {
-    const syncedTask = task.relatedCalendarEventId === existingByTask.id
+    const event = await calendarEventsRepo.updateEvent(existingByTask.id, transformTaskToCalendarEventPayload(task))
+    const syncedTask = task.relatedCalendarEventId === event.id
       ? task
-      : await tasksRepo.update(task.id, { relatedCalendarEventId: existingByTask.id })
-    return { task: syncedTask, event: existingByTask, created: false }
+      : await tasksRepo.update(task.id, { relatedCalendarEventId: event.id })
+    return { task: syncedTask, event, created: false }
   }
 
   const event = await createCalendarEvent(transformTaskToCalendarEventPayload(task))
