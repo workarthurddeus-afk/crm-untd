@@ -7,12 +7,11 @@ import {
   sortFeedbacksForReview,
 } from '@/lib/utils/feedbacks'
 import { createMockRepository } from './mock-storage'
-
-type CreateFeedbackInput = Partial<FeedbackInput> &
-  Pick<
-    FeedbackInput,
-    'title' | 'content' | 'type' | 'source' | 'status' | 'impact' | 'frequency' | 'sentiment' | 'priority' | 'capturedAt'
-  >
+import {
+  createFeedbacksSupabaseRepository,
+  type CreateFeedbackInput,
+  type FeedbacksRepository,
+} from './feedbacks.supabase.repository'
 
 const storageRepo = createMockRepository<Feedback>(
   'untd-feedbacks',
@@ -73,7 +72,8 @@ function withoutUndefined<T extends Record<string, unknown>>(value: T): Partial<
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as Partial<T>
 }
 
-export const feedbacksRepo = {
+function createLocalFeedbacksRepository(): FeedbacksRepository {
+  return {
   async list(filters?: Partial<Feedback>): Promise<Feedback[]> {
     return this.listFeedbacks(filters as FeedbackFilters)
   },
@@ -103,6 +103,9 @@ export const feedbacksRepo = {
     const current = await storageRepo.getById(id)
     if (!current) throw new Error(`Feedback ${id} not found`)
     return normalizeFeedback(await storageRepo.update(id, completeForUpdate(current, data)))
+  },
+  async delete(id: string): Promise<void> {
+    return this.deleteFeedback(id)
   },
   async deleteFeedback(id: string): Promise<void> {
     await storageRepo.delete(id)
@@ -158,3 +161,44 @@ export const feedbacksRepo = {
     return storageRepo.subscribe(listener)
   },
 }
+}
+
+export type FeedbacksDataSource = 'local' | 'supabase'
+
+export function resolveFeedbacksDataSource(value: string | undefined): FeedbacksDataSource {
+  return value === 'supabase' ? 'supabase' : 'local'
+}
+
+export function createFeedbacksRepository(
+  dataSource: FeedbacksDataSource = resolveFeedbacksDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE)
+): FeedbacksRepository {
+  if (dataSource === 'supabase') return createFeedbacksSupabaseRepository()
+  return localFeedbacksRepo
+}
+
+const localFeedbacksRepo = createLocalFeedbacksRepository()
+let supabaseFeedbacksRepo: FeedbacksRepository | null = null
+
+function getActiveFeedbacksRepository(): FeedbacksRepository {
+  if (resolveFeedbacksDataSource(process.env.NEXT_PUBLIC_DATA_SOURCE) !== 'supabase') {
+    return localFeedbacksRepo
+  }
+
+  supabaseFeedbacksRepo ??= createFeedbacksSupabaseRepository()
+  return supabaseFeedbacksRepo
+}
+
+export const feedbacksRepo = new Proxy({} as FeedbacksRepository, {
+  get(_target, property: keyof FeedbacksRepository) {
+    if (property === 'subscribe') {
+      return (listener: () => void) => getActiveFeedbacksRepository().subscribe(listener)
+    }
+
+    return async (...args: unknown[]) => {
+      const repository = getActiveFeedbacksRepository()
+      const value = repository[property]
+      if (typeof value !== 'function') return value
+      return (value as (...items: unknown[]) => unknown).apply(repository, args)
+    }
+  },
+})
