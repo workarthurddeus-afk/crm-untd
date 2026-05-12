@@ -19,6 +19,10 @@ export function PipelineColumn({ stage, leads, activeLeadStageId }: Props) {
 
   const isDroppingFromOtherColumn =
     isOver && activeLeadStageId !== null && activeLeadStageId !== stage.id
+  // The user can't always tell which column the lead left from. Give the
+  // origin a quiet "lifted" treatment so the drag has both endpoints visible.
+  const isOriginOfActiveDrag =
+    activeLeadStageId === stage.id && activeLeadStageId !== null
 
   const revenueSum = leads.reduce(
     (sum, l) => sum + (l.revenuePotential ?? 0),
@@ -38,10 +42,17 @@ export function PipelineColumn({ stage, leads, activeLeadStageId }: Props) {
       role="region"
       aria-label={`Etapa ${stage.name}. ${leads.length} leads nesta etapa.`}
       className={cn(
-        'flex flex-col rounded-lg border border-border w-[min(76vw,280px)] sm:w-[280px] shrink-0',
-        'max-h-[calc(100vh-240px)] sm:max-h-[calc(100vh-220px)]',
+        'flex flex-col rounded-lg border w-[min(76vw,280px)] sm:w-[280px] shrink-0',
+        // Fill the board's vertical space without magic-number calc() math.
+        // The board parent uses `flex flex-1 min-h-0`, so `h-full` here
+        // anchors the column to the available height and the inner list
+        // becomes the only scrolling surface.
+        'h-full min-h-0',
         'transition-colors duration-fast',
         columnBg,
+        isOriginOfActiveDrag
+          ? 'border-dashed border-primary/30 opacity-80'
+          : 'border-border',
         isDroppingFromOtherColumn && 'ring-2 ring-primary/40 ring-inset bg-primary/[0.04]',
       )}
     >
@@ -76,14 +87,16 @@ export function PipelineColumn({ stage, leads, activeLeadStageId }: Props) {
         data-pipeline-dropzone
         ref={setNodeRef}
         role="list"
-        aria-label={`Solte leads em ${stage.name}. ${leads.length} leads nesta etapa.`}
+        aria-label="Soltar leads aqui"
         className="flex-1 overflow-y-auto px-2 py-2 space-y-2"
       >
         {leads.length === 0 ? (
-          <div className="flex min-h-28 flex-col items-center justify-center rounded-md border border-dashed border-border-subtle bg-surface/30 px-3 py-7 text-center mx-1">
+          // No nested container: the column already provides the bounding
+          // surface. Just center the affordance inside it.
+          <div className="flex flex-1 min-h-28 flex-col items-center justify-center px-3 py-7 text-center">
             <Plus className="h-5 w-5 text-text-muted" strokeWidth={1.5} aria-hidden />
-            <span className="mt-1 text-xs font-medium text-text-secondary">Sem leads por aqui</span>
-            <span className="mt-0.5 text-[11px] leading-snug text-text-muted">
+            <span className="mt-1.5 text-xs font-medium text-text-secondary">Sem leads por aqui</span>
+            <span className="mt-1 max-w-[200px] text-[11px] leading-snug text-text-secondary">
               Arraste uma oportunidade para esta etapa.
             </span>
           </div>

@@ -102,7 +102,10 @@ describe('pipeline hardening and polish', () => {
     expect(column?.getAttribute('role')).toBe('region')
     expect(column?.getAttribute('aria-label')).toContain('Etapa Prospecção')
     expect(dropZone?.getAttribute('role')).toBe('list')
-    expect(dropZone?.getAttribute('aria-label')).toContain('Solte leads em Prospecção')
+    // Dropzone label intentionally short — the parent column already
+    // announces "Etapa <name>", so repeating the stage name on entry was
+    // verbose for screen readers (audit P3).
+    expect(dropZone?.getAttribute('aria-label')).toContain('Soltar leads')
     expect(stageDot?.getAttribute('style')).toContain('--pipeline-stage-color')
     expect(container.textContent).toContain('Sem leads por aqui')
   })

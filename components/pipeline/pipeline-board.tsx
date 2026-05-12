@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { pipelineKeyboardCoordinates } from './pipeline-keyboard-coordinates'
 import { Users, TrendingUp, Trophy, Workflow, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,7 @@ export function PipelineBoard({ leads, stages, onNewLead }: Props) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: pipelineKeyboardCoordinates }),
   )
 
   const sortedStages = useMemo(
@@ -225,7 +225,7 @@ export function PipelineBoard({ leads, stages, onNewLead }: Props) {
       <div
         data-pipeline-board-scroll
         aria-label="Quadro do pipeline por etapas"
-        className="flex gap-4 overflow-x-auto px-4 pb-8 pt-6 min-h-[calc(100vh-180px)] sm:px-6 lg:px-8"
+        className="flex flex-1 min-h-0 gap-4 overflow-x-auto px-4 pb-8 pt-6 sm:px-6 lg:px-8"
       >
         {sortedStages.map((stage) => (
           <PipelineColumn

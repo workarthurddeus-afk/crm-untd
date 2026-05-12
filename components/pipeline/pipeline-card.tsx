@@ -21,7 +21,10 @@ function icpChipClass(score: number): string {
   if (score >= 80) return 'bg-primary/15 text-primary'
   if (score >= 60) return 'bg-info/15 text-info'
   if (score >= 40) return 'bg-warning/15 text-warning'
-  return 'bg-text-muted/15 text-text-muted'
+  // Low-fit (<40): use a neutral surface + readable secondary text so the
+  // *least* desirable leads aren't also the *least readable*. Communicates
+  // "low fit" through neutrality, not dimness.
+  return 'bg-surface-elevated text-text-secondary border border-border'
 }
 
 function followUpToneClass(tone: string): string {
@@ -45,7 +48,13 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
     if (isDragging) wasDraggingRef.current = true
   }, [isDragging])
 
-  const style = isOverlay
+  // When the user is mid-drag, the DragOverlay handles the visual that
+  // follows the pointer. The source card stays anchored (we already render
+  // it at opacity-30 below). Applying the dnd-kit `transform` here too
+  // produced a ghost that lagged behind the overlay, fighting against the
+  // pointer with the card's own CSS transition. Drop the transform on the
+  // source while dragging.
+  const style = isOverlay || isDragging
     ? undefined
     : { transform: CSS.Translate.toString(transform) }
 
@@ -99,7 +108,10 @@ export function PipelineCard({ lead, isOverlay = false }: Props) {
       aria-roledescription={isOverlay ? undefined : 'Lead do pipeline'}
       className={cn(
         'min-h-[112px] bg-surface border border-border rounded-md p-3',
-        'transition-all duration-fast',
+        // Scope transitions to the properties that actually change on
+        // hover/focus. `transition-all` was tweening incidental updates
+        // (incl. dnd-kit's transform) every frame.
+        'transition-[border-color,box-shadow,transform] duration-fast',
         'hover:border-primary/30 hover:shadow-md-token',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         isOverlay && [
